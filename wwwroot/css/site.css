@@ -320,8 +320,9 @@ a {
 
 .status-dot {
     font-size: 0.72rem;
-    color: #a5f8dc;
-    background: rgba(0, 200, 150, 0.18);
+    color: #d6ccff;
+    background: rgba(107, 89, 255, 0.2);
+    border: 1px solid rgba(136, 118, 255, 0.32);
     border-radius: 999px;
     padding: 0.15rem 0.45rem;
 }
@@ -336,15 +337,19 @@ a {
     border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.12);
     font-size: 0.82rem;
+    backdrop-filter: blur(8px);
 }
 
 .bubble-user {
-    background: rgba(16, 31, 55, 0.82);
+    background: linear-gradient(140deg, rgba(23, 35, 62, 0.7), rgba(15, 30, 58, 0.55));
+    border-color: rgba(129, 155, 198, 0.25);
 }
 
 .bubble-ai {
-    background: rgba(0, 200, 150, 0.12);
-    border-color: rgba(0, 200, 150, 0.3);
+    background: linear-gradient(135deg, rgba(71, 56, 157, 0.34), rgba(36, 67, 135, 0.26));
+    border-color: rgba(132, 116, 255, 0.38);
+    box-shadow: 0 8px 18px rgba(23, 17, 60, 0.35);
+    transform: translateY(-1px);
 }
 
 .sender {
@@ -367,6 +372,28 @@ a {
     width: 100%;
 }
 
+.ai-actions .k-button-solid-primary,
+.ai-actions .k-button:first-child {
+    background: linear-gradient(90deg, #5e59f4, #6e8cff) !important;
+    border-color: rgba(122, 132, 255, 0.75) !important;
+    color: #eff2ff !important;
+}
+
+.ai-actions .k-button-solid-primary:hover,
+.ai-actions .k-button:first-child:hover {
+    background: linear-gradient(90deg, #6a66ff, #7a97ff) !important;
+}
+
+.ai-actions .k-button-outline {
+    border-color: rgba(136, 118, 255, 0.46) !important;
+    color: #d8ceff !important;
+    background: rgba(98, 82, 206, 0.08) !important;
+}
+
+.ai-actions .k-button-outline:hover {
+    background: rgba(104, 87, 223, 0.18) !important;
+}
+
 .k-grid,
 .k-input,
 .k-input-solid,
@@ -378,11 +405,26 @@ a {
 .k-grid,
 .k-grid-header,
 .k-grid-content,
-.k-pager-wrap,
 .k-table-thead,
 .k-table-row {
     background: rgba(7, 16, 31, 0.78) !important;
     color: #dfe9f9 !important;
+}
+
+.k-grid .k-pager-wrap,
+.k-pager-wrap,
+.k-grid .k-pager,
+.k-grid .k-grid-pager {
+    background: linear-gradient(180deg, rgba(9, 20, 39, 0.98), rgba(8, 18, 35, 0.96)) !important;
+    color: #dfe9f9 !important;
+}
+
+.k-pager-nav,
+.k-pager-numbers .k-button,
+.k-pager-info,
+.k-pager-sizes,
+.k-pager .k-link {
+    color: #d7e3f8 !important;
 }
 
 .k-grid-header .k-table-th,
