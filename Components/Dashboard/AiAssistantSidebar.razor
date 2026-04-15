@@ -1,0 +1,30 @@
+<aside class="ai-sidebar glass-panel">
+    <div class="ai-header">
+        <h2>Elyra AI</h2>
+        <span class="status-dot">Live</span>
+    </div>
+
+    <div class="chat-thread">
+        @foreach (var line in Conversation)
+        {
+            <div class="chat-bubble @(line.Sender == "User" ? "bubble-user" : "bubble-ai")">
+                <span class="sender">@line.Sender</span>
+                <p>@line.Message</p>
+            </div>
+        }
+    </div>
+
+    <div class="ai-actions">
+        <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary" Class="ai-action-btn">
+            Summarize current view
+        </TelerikButton>
+        <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline" Class="ai-action-btn">
+            Detect anomalies
+        </TelerikButton>
+    </div>
+</aside>
+
+@code {
+    [Parameter]
+    public IReadOnlyList<AiMessage> Conversation { get; set; } = Array.Empty<AiMessage>();
+}

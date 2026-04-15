@@ -1,0 +1,149 @@
+@using System.Globalization
+
+<section class="grid-shell glass-panel">
+    <div class="grid-toolbar">
+        <div class="toolbar-headline">Transaction Command Center</div>
+        <TelerikTextBox Value="@_filterText"
+                        ValueChanged="OnFilterTextChanged"
+                        Placeholder="Filter with AI…"
+                        Width="100%" />
+        <div class="chip-row">
+            @foreach (var chip in QuickChips)
+            {
+                <TelerikButton Class="@GetChipClass(chip)"
+                               Size="@ThemeConstants.Button.Size.Small"
+                               OnClick="@(() => ToggleChip(chip))">
+                    @chip
+                </TelerikButton>
+            }
+        </div>
+    </div>
+
+    <TelerikGrid Data="@FilteredTransactions"
+                 Pageable="true"
+                 PageSize="8"
+                 Height="540px"
+                 Sortable="true"
+                 Resizable="true"
+                 Class="txn-grid">
+        <GridColumns>
+            <GridColumn Field="@nameof(TransactionRecord.TransactionId)" Title="Transaction ID" Width="160px" />
+            <GridColumn Field="@nameof(TransactionRecord.Merchant)" Title="Merchant" Width="180px" />
+            <GridColumn Title="Amount" Width="130px">
+                <Template Context="item">
+                    @{
+                        var row = (TransactionRecord)item;
+                    }
+                    <span class="amount">£@row.Amount.ToString("N2", CultureInfo.InvariantCulture)</span>
+                </Template>
+            </GridColumn>
+            <GridColumn Field="@nameof(TransactionRecord.Currency)" Title="Currency" Width="95px" />
+            <GridColumn Title="Status" Width="135px">
+                <Template Context="item">
+                    @{
+                        var row = (TransactionRecord)item;
+                    }
+                    <span class="status-chip @GetStatusClass(row.Status)">@row.Status</span>
+                </Template>
+            </GridColumn>
+            <GridColumn Field="@nameof(TransactionRecord.PaymentRail)" Title="Payment Rail" Width="120px" />
+            <GridColumn Title="Risk Score" Width="170px">
+                <Template Context="item">
+                    @{
+                        var row = (TransactionRecord)item;
+                    }
+                    <div class="risk-cell">
+                        <span>@row.RiskScore</span>
+                        <div class="risk-track">
+                            <div class="risk-bar @GetRiskClass(row.RiskScore)"
+                                 style="@($"width:{row.RiskScore.ToString(CultureInfo.InvariantCulture)}%;")"></div>
+                        </div>
+                    </div>
+                </Template>
+            </GridColumn>
+            <GridColumn Field="@nameof(TransactionRecord.Timestamp)"
+                        Title="Timestamp"
+                        DisplayFormat="{0:dd MMM HH:mm}"
+                        Width="145px" />
+        </GridColumns>
+    </TelerikGrid>
+</section>
+
+@code {
+    private readonly string[] QuickChips = ["Failed today", "High value", "Fraud flagged"];
+    private string _filterText = string.Empty;
+    private string? _activeChip;
+
+    [Parameter]
+    public IReadOnlyList<TransactionRecord> Transactions { get; set; } = Array.Empty<TransactionRecord>();
+
+    private IEnumerable<TransactionRecord> FilteredTransactions =>
+        Transactions.Where(FilterByText).Where(FilterByChip);
+
+    private void OnFilterTextChanged(string value)
+    {
+        _filterText = value;
+    }
+
+    private void ToggleChip(string chip)
+    {
+        _activeChip = _activeChip == chip ? null : chip;
+    }
+
+    private string GetChipClass(string chip) => _activeChip == chip ? "chip-active" : "chip-idle";
+
+    private bool FilterByText(TransactionRecord row)
+    {
+        if (string.IsNullOrWhiteSpace(_filterText))
+        {
+            return true;
+        }
+
+        var query = _filterText.Trim().ToLowerInvariant();
+        if (query.Contains("failed"))
+        {
+            return row.Status == "Failed";
+        }
+
+        if (query.Contains("fraud") || query.Contains("risk"))
+        {
+            return row.RiskScore >= 70;
+        }
+
+        if (query.Contains("high"))
+        {
+            return row.Amount >= 3000m;
+        }
+
+        return row.TransactionId.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || row.Merchant.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || row.PaymentRail.Contains(query, StringComparison.OrdinalIgnoreCase)
+            || row.Status.Contains(query, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private bool FilterByChip(TransactionRecord row) =>
+        _activeChip switch
+        {
+            "Failed today" => row.Status == "Failed" && row.Timestamp.Date == DateTime.Today,
+            "High value" => row.Amount >= 3000m,
+            "Fraud flagged" => row.RiskScore >= 70,
+            _ => true
+        };
+
+    private static string GetStatusClass(string status) =>
+        status switch
+        {
+            "Successful" => "status-success",
+            "Failed" => "status-failed",
+            "Pending" => "status-pending",
+            _ => "status-neutral"
+        };
+
+    private static string GetRiskClass(int score) =>
+        score switch
+        {
+            >= 80 => "risk-high",
+            >= 50 => "risk-medium",
+            _ => "risk-low"
+        };
+}

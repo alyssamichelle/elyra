@@ -1,0 +1,51 @@
+﻿@page "/"
+
+<PageTitle>Elyra Dashboard</PageTitle>
+
+<main class="dashboard-page">
+    <TopBar />
+
+    <section class="dashboard-main">
+        <div class="dashboard-left">
+            <KpiCardsSection Metrics="@Kpis" />
+            <SmartGridSection Transactions="@Transactions" />
+        </div>
+        <AiAssistantSidebar Conversation="@Conversation" />
+    </section>
+</main>
+
+@code {
+    private readonly List<KpiMetric> Kpis =
+    [
+        new() { Label = "Total Volume", Value = "£2.84M", Delta = "+8.4%", Positive = true, ProgressPercent = 84 },
+        new() { Label = "Successful Payments", Value = "18,942", Delta = "+3.1%", Positive = true, ProgressPercent = 76 },
+        new() { Label = "Failed Transactions", Value = "312", Delta = "+1.8%", Positive = false, ProgressPercent = 34 },
+        new() { Label = "Avg. Processing Time", Value = "1.9s", Delta = "-0.4s", Positive = true, ProgressPercent = 68 },
+        new() { Label = "Fraud Alerts", Value = "27", Delta = "+0.9%", Positive = false, ProgressPercent = 41 },
+        new() { Label = "Net Settlement", Value = "£2.51M", Delta = "+6.2%", Positive = true, ProgressPercent = 79 }
+    ];
+
+    private readonly List<TransactionRecord> Transactions =
+    [
+        new() { TransactionId = "TXN-2024-184201", Merchant = "Brixton Grocers Ltd", Amount = 4821.45m, Currency = "GBP", Status = "Successful", PaymentRail = "Faster Payments", RiskScore = 24, Timestamp = DateTime.Now.AddMinutes(-16) },
+        new() { TransactionId = "TXN-2024-184202", Merchant = "Camden Mobility Co", Amount = 1125.00m, Currency = "GBP", Status = "Failed", PaymentRail = "Card Acquirer", RiskScore = 72, Timestamp = DateTime.Now.AddMinutes(-28) },
+        new() { TransactionId = "TXN-2024-184203", Merchant = "Leeds Home Energy", Amount = 3499.99m, Currency = "GBP", Status = "Successful", PaymentRail = "Open Banking", RiskScore = 31, Timestamp = DateTime.Now.AddMinutes(-34) },
+        new() { TransactionId = "TXN-2024-184204", Merchant = "Edinburgh Travel Hub", Amount = 684.20m, Currency = "GBP", Status = "Pending", PaymentRail = "BACS", RiskScore = 48, Timestamp = DateTime.Now.AddMinutes(-42) },
+        new() { TransactionId = "TXN-2024-184205", Merchant = "Bristol Care Pharmacy", Amount = 5120.10m, Currency = "GBP", Status = "Successful", PaymentRail = "Faster Payments", RiskScore = 18, Timestamp = DateTime.Now.AddHours(-1) },
+        new() { TransactionId = "TXN-2024-184206", Merchant = "Manchester Tech Supplies", Amount = 2930.87m, Currency = "GBP", Status = "Failed", PaymentRail = "Card Acquirer", RiskScore = 83, Timestamp = DateTime.Now.AddHours(-2) },
+        new() { TransactionId = "TXN-2024-184207", Merchant = "Norwich Fresh Market", Amount = 254.37m, Currency = "GBP", Status = "Successful", PaymentRail = "Open Banking", RiskScore = 12, Timestamp = DateTime.Now.AddHours(-3) },
+        new() { TransactionId = "TXN-2024-184208", Merchant = "Sheffield Telecom Retail", Amount = 7712.11m, Currency = "GBP", Status = "Failed", PaymentRail = "Faster Payments", RiskScore = 91, Timestamp = DateTime.Now.AddHours(-4) },
+        new() { TransactionId = "TXN-2024-184209", Merchant = "Oxford Digital Press", Amount = 1875.33m, Currency = "GBP", Status = "Successful", PaymentRail = "BACS", RiskScore = 29, Timestamp = DateTime.Now.AddHours(-5) },
+        new() { TransactionId = "TXN-2024-184210", Merchant = "Glasgow Urban Transit", Amount = 4012.55m, Currency = "GBP", Status = "Pending", PaymentRail = "Card Acquirer", RiskScore = 64, Timestamp = DateTime.Now.AddHours(-6) },
+        new() { TransactionId = "TXN-2024-184211", Merchant = "Liverpool Fashion Wharf", Amount = 933.90m, Currency = "GBP", Status = "Successful", PaymentRail = "Open Banking", RiskScore = 17, Timestamp = DateTime.Now.AddHours(-7) },
+        new() { TransactionId = "TXN-2024-184212", Merchant = "Cardiff Bistro Collective", Amount = 3288.70m, Currency = "GBP", Status = "Failed", PaymentRail = "Faster Payments", RiskScore = 76, Timestamp = DateTime.Now.AddHours(-8) }
+    ];
+
+    private readonly List<AiMessage> Conversation =
+    [
+        new() { Sender = "User", Message = "Why did failed payments increase today?" },
+        new() { Sender = "Elyra AI", Message = "Failure rate is up 1.8% mostly from card acquirer retries at Camden Mobility Co and Manchester Tech Supplies in the last 2 hours." },
+        new() { Sender = "User", Message = "Any fraud patterns I should know?" },
+        new() { Sender = "Elyra AI", Message = "Three failed Faster Payments over £3k have risk scores above 75. Sheffield Telecom Retail is the strongest anomaly cluster." }
+    ];
+}
