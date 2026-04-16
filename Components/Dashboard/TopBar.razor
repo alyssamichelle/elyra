@@ -9,47 +9,36 @@
     </div>
 
     <div class="topbar-actions">
+        <button type="button"
+                class="theme-toggle-btn"
+                aria-label="Toggle theme"
+                @onclick="ToggleThemeAsync">
+            <span class="theme-toggle-icon">@(IsDarkMode ? "☀" : "☾")</span>
+            <span>@(IsDarkMode ? "Light mode" : "Dark mode")</span>
+        </button>
         <label class="live-toggle">
             <input type="checkbox"
                    checked="@LiveModeEnabled"
                    @onchange="OnLiveModeToggleChanged" />
             <span>Simulated Live</span>
         </label>
-        <TelerikTextBox Value="@_promptText"
-                        ValueChanged="OnPromptChanged"
-                        Placeholder="Ask Elyra anything…"
-                        Width="100%" />
-        <TelerikButton Class="ask-btn"
-                       FillMode="@ThemeConstants.Button.FillMode.Outline"
-                       OnClick="SubmitPrompt">
-            Ask
-        </TelerikButton>
         <button class="icon-btn" aria-label="Notifications">🔔</button>
         <div class="avatar">AN</div>
     </div>
 </header>
 
 @code {
-    private string _promptText = string.Empty;
-
-    [Parameter]
-    public EventCallback<string> OnAskPrompt { get; set; }
-
     [Parameter]
     public bool LiveModeEnabled { get; set; }
 
     [Parameter]
     public EventCallback<bool> OnLiveModeChanged { get; set; }
 
-    private void OnPromptChanged(string value)
-    {
-        _promptText = value;
-    }
+    [Parameter]
+    public bool IsDarkMode { get; set; }
 
-    private async Task SubmitPrompt()
-    {
-        await OnAskPrompt.InvokeAsync(_promptText);
-    }
+    [Parameter]
+    public EventCallback<bool> OnThemeModeChanged { get; set; }
 
     private async Task OnLiveModeToggleChanged(ChangeEventArgs args)
     {
@@ -61,4 +50,6 @@
         };
         await OnLiveModeChanged.InvokeAsync(isEnabled);
     }
+
+    private Task ToggleThemeAsync() => OnThemeModeChanged.InvokeAsync(!IsDarkMode);
 }

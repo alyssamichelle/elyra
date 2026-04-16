@@ -22,14 +22,17 @@
         </div>
     }
 
-    <div class="chat-thread">
-        @foreach (var line in Conversation)
-        {
-            <div class="chat-bubble @(line.Sender == "User" ? "bubble-user" : "bubble-ai")">
-                <span class="sender">@line.Sender</span>
-                <p>@line.Message</p>
-            </div>
-        }
+    <div class="ai-chat-shell">
+        <TelerikChat Data="@Conversation"
+                     AuthorId="@CurrentUserId"
+                     Suggestions="@ChatSuggestions"
+                     TextField="@nameof(AiChatMessage.Text)"
+                     AuthorIdField="@nameof(AiChatMessage.AuthorId)"
+                     AuthorNameField="@nameof(AiChatMessage.AuthorName)"
+                     TimestampField="@nameof(AiChatMessage.Timestamp)"
+                     Height="320px"
+                     OnSendMessage="HandleSendMessageAsync">
+        </TelerikChat>
     </div>
 
     <div class="insights-thread">
@@ -60,8 +63,10 @@
 </aside>
 
 @code {
+    private const string CurrentUserId = "user";
+
     [Parameter]
-    public IReadOnlyList<AiMessage> Conversation { get; set; } = Array.Empty<AiMessage>();
+    public IReadOnlyList<AiChatMessage> Conversation { get; set; } = Array.Empty<AiChatMessage>();
 
     [Parameter]
     public AiQueryResponse? QueryResponse { get; set; }
@@ -74,4 +79,22 @@
 
     [Parameter]
     public EventCallback OnDetectAnomalies { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<string> SuggestedPrompts { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public EventCallback<string> OnSendPrompt { get; set; }
+
+    private List<string> ChatSuggestions => SuggestedPrompts.ToList();
+
+    private Task HandleSendMessageAsync(ChatSendMessageEventArgs args)
+    {
+        if (string.IsNullOrWhiteSpace(args.Message))
+        {
+            return Task.CompletedTask;
+        }
+
+        return OnSendPrompt.InvokeAsync(args.Message);
+    }
 }

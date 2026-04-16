@@ -19,13 +19,42 @@
         </div>
     </div>
 
-    <TelerikGrid Data="@FilteredTransactions"
+    <TelerikGrid @ref="@_gridRef"
+                 Data="@FilteredTransactions"
                  Pageable="true"
                  PageSize="8"
                  Height="540px"
                  Sortable="true"
                  Resizable="true"
                  Class="txn-grid">
+        <GridToolBar>
+            <GridToolBarSmartBoxTool>
+                <GridToolBarSmartBoxToolSettings>
+                    <GridToolBarSmartBoxToolAIAssistantSettings OnPromptRequest="HandleAIPromptRequestAsync"
+                                                                PromptSuggestions="@AIPromptSuggestions"
+                                                                Placeholder="Ask the grid to focus the riskiest transactions"
+                                                                EnableSpeechToText="true">
+                        <AIPromptSpeechToTextButtonSettings Lang="en-GB" />
+                    </GridToolBarSmartBoxToolAIAssistantSettings>
+                    <GridToolBarSmartBoxToolSemanticSearchSettings OnSearch="HandleSemanticSearchAsync"
+                                                                   Placeholder="Semantic search transactions..."
+                                                                   DebounceDelay="600">
+                    </GridToolBarSmartBoxToolSemanticSearchSettings>
+                    <GridToolBarSmartBoxToolSearchSettings Enabled="false">
+                    </GridToolBarSmartBoxToolSearchSettings>
+                </GridToolBarSmartBoxToolSettings>
+            </GridToolBarSmartBoxTool>
+            <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline"
+                           Size="@ThemeConstants.Button.Size.Small"
+                           OnClick="ExportToExcelAsync">
+                Export Excel
+            </TelerikButton>
+            <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline"
+                           Size="@ThemeConstants.Button.Size.Small"
+                           OnClick="ExportToCsvAsync">
+                Export CSV
+            </TelerikButton>
+        </GridToolBar>
         <GridColumns>
             <GridColumn Title="Transaction ID" Width="180px">
                 <Template Context="item">
@@ -97,8 +126,21 @@
     [Parameter]
     public IReadOnlySet<string> HighlightedTransactionIds { get; set; } = new HashSet<string>();
 
+    [Parameter]
+    public IReadOnlyList<string> PromptSuggestions { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public EventCallback<GridSmartBoxSemanticSearchEventArgs> OnSemanticSearch { get; set; }
+
+    [Parameter]
+    public EventCallback<GridSmartBoxAIAssistantPromptRequestEventArgs> OnPromptRequest { get; set; }
+
+    private TelerikGrid<TransactionRecord>? _gridRef;
+
     private IEnumerable<TransactionRecord> FilteredTransactions =>
         Transactions.Where(FilterByText).Where(FilterByChip);
+
+    private List<string> AIPromptSuggestions => PromptSuggestions.ToList();
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
     {
@@ -188,5 +230,31 @@
 
         var rows = FilteredTransactions.ToList();
         await OnCurrentViewChanged.InvokeAsync(rows);
+    }
+
+    private Task HandleSemanticSearchAsync(GridSmartBoxSemanticSearchEventArgs args) =>
+        OnSemanticSearch.InvokeAsync(args);
+
+    private Task HandleAIPromptRequestAsync(GridSmartBoxAIAssistantPromptRequestEventArgs args) =>
+        OnPromptRequest.InvokeAsync(args);
+
+    private async Task ExportToExcelAsync()
+    {
+        if (_gridRef is null)
+        {
+            return;
+        }
+
+        await _gridRef.ExportToExcelAsync();
+    }
+
+    private async Task ExportToCsvAsync()
+    {
+        if (_gridRef is null)
+        {
+            return;
+        }
+
+        await _gridRef.ExportToCsvAsync();
     }
 }

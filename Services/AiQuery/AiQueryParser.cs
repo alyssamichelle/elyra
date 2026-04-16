@@ -17,9 +17,9 @@ public static partial class AiQueryParser
         }
 
         var cleanPrompt = prompt.Trim();
-        var query = cleanPrompt.ToLowerInvariant();
+        var query = Normalize(cleanPrompt);
 
-        if (query.Contains("top") && query.Contains("risk") && query.Contains("merchant"))
+        if (ContainsAny(query, "merchant", "merchants") && ContainsAny(query, "top", "risky", "riskiest", "worst", "highest risk"))
         {
             return new AiQueryInterpretation
             {
@@ -28,7 +28,9 @@ public static partial class AiQueryParser
             };
         }
 
-        if (query.Contains("why") && query.Contains("fail") && query.Contains("increase"))
+        if (ContainsAny(query, "why", "what", "explain") &&
+            ContainsAny(query, "fail", "failure", "failed") &&
+            ContainsAny(query, "increase", "increased", "up", "spike", "spiked", "rising"))
         {
             return new AiQueryInterpretation
             {
@@ -37,7 +39,8 @@ public static partial class AiQueryParser
             };
         }
 
-        if (query.Contains("failed") && (query.Contains(">") || query.Contains("over") || query.Contains("above")))
+        if (ContainsAny(query, "failed", "failures", "failed payments", "failed transactions") &&
+            (query.Contains(">") || query.Contains("over") || query.Contains("above")))
         {
             var threshold = TryParseAmountThreshold(query);
             if (threshold is not null)
@@ -51,12 +54,29 @@ public static partial class AiQueryParser
             }
         }
 
+        if (ContainsAny(query, "worst", "riskiest", "highest risk", "most dangerous", "highest-risk") &&
+            ContainsAny(query, "transaction", "transactions", "payment", "payments"))
+        {
+            var timeWindow = TryParseTimeWindow(query);
+
+            return new AiQueryInterpretation
+            {
+                Prompt = cleanPrompt,
+                Intent = AiQueryIntent.WorstTransactions,
+                LookbackWindow = timeWindow.Window,
+                TimeWindowLabel = timeWindow.Label
+            };
+        }
+
         return new AiQueryInterpretation
         {
             Prompt = cleanPrompt,
             Intent = AiQueryIntent.Unknown
         };
     }
+
+    private static string Normalize(string prompt) =>
+        Regex.Replace(prompt.ToLowerInvariant(), @"\s+", " ").Trim();
 
     private static decimal? TryParseAmountThreshold(string query)
     {
@@ -79,5 +99,33 @@ public static partial class AiQueryParser
         }
 
         return amount;
+    }
+
+    private static bool ContainsAny(string query, params string[] phrases) =>
+        phrases.Any(query.Contains);
+
+    private static (TimeSpan? Window, string Label) TryParseTimeWindow(string query)
+    {
+        if (query.Contains("last month") || query.Contains("past month"))
+        {
+            return (TimeSpan.FromDays(30), "the last month");
+        }
+
+        if (query.Contains("last 30 days") || query.Contains("past 30 days"))
+        {
+            return (TimeSpan.FromDays(30), "the last 30 days");
+        }
+
+        if (query.Contains("last week") || query.Contains("past week"))
+        {
+            return (TimeSpan.FromDays(7), "the last week");
+        }
+
+        if (query.Contains("today"))
+        {
+            return (TimeSpan.FromDays(1), "today");
+        }
+
+        return (null, "the current dataset");
     }
 }

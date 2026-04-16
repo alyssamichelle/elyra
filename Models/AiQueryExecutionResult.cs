@@ -15,4 +15,6 @@ public sealed class AiQueryExecutionResult
     public string PrimaryDriver { get; init; } = string.Empty;
 
     public string TopDeclineReason { get; init; } = string.Empty;
+
+    public string TimeWindowLabel { get; init; } = string.Empty;
 }

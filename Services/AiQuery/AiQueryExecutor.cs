@@ -14,6 +14,7 @@ public static class AiQueryExecutor
             AiQueryIntent.FailedAboveAmount => ExecuteFailedAboveAmount(interpretation, allTransactions),
             AiQueryIntent.WhyFailuresIncreased => ExecuteFailureIncrease(allTransactions, now),
             AiQueryIntent.TopRiskyMerchants => ExecuteTopRiskyMerchants(allTransactions),
+            AiQueryIntent.WorstTransactions => ExecuteWorstTransactions(interpretation, allTransactions, now),
             _ => new AiQueryExecutionResult { Rows = allTransactions }
         };
     }
@@ -91,6 +92,35 @@ public static class AiQueryExecutor
         {
             Rows = rows,
             TopMerchants = topMerchants
+        };
+    }
+
+    private static AiQueryExecutionResult ExecuteWorstTransactions(
+        AiQueryInterpretation interpretation,
+        IReadOnlyList<TransactionRecord> allTransactions,
+        DateTime now)
+    {
+        var timeWindowLabel = interpretation.TimeWindowLabel;
+        IEnumerable<TransactionRecord> scopedTransactions = allTransactions;
+
+        if (interpretation.LookbackWindow is { } lookbackWindow)
+        {
+            var windowStart = now.Subtract(lookbackWindow);
+            scopedTransactions = scopedTransactions.Where(x => x.Timestamp >= windowStart);
+        }
+
+        var rows = scopedTransactions
+            .OrderByDescending(x => x.RiskScore)
+            .ThenByDescending(x => x.Status == "Failed")
+            .ThenByDescending(x => x.Amount)
+            .ThenByDescending(x => x.Timestamp)
+            .Take(25)
+            .ToList();
+
+        return new AiQueryExecutionResult
+        {
+            Rows = rows,
+            TimeWindowLabel = string.IsNullOrWhiteSpace(timeWindowLabel) ? "the current dataset" : timeWindowLabel
         };
     }
 }

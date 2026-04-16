@@ -9,7 +9,8 @@ public static class AiQueryResponseFormatter
     [
         "show failed > £3k",
         "why did failures increase",
-        "top risky merchants"
+        "top risky merchants",
+        "show me the worst transactions in the last month"
     ];
 
     public static AiQueryResponse Format(
@@ -21,6 +22,7 @@ public static class AiQueryResponseFormatter
             AiQueryIntent.FailedAboveAmount => FormatFailedAbove(executionResult, interpretation),
             AiQueryIntent.WhyFailuresIncreased => FormatFailureIncrease(executionResult, interpretation),
             AiQueryIntent.TopRiskyMerchants => FormatTopRisky(executionResult, interpretation),
+            AiQueryIntent.WorstTransactions => FormatWorstTransactions(executionResult, interpretation),
             _ => FormatFallback(interpretation)
         };
     }
@@ -67,6 +69,25 @@ public static class AiQueryResponseFormatter
         var summary =
             $"Top risky merchants by average risk score are: {merchants}. " +
             "The grid now shows their transactions in descending risk order.";
+
+        return new AiQueryResponse
+        {
+            Prompt = interpretation.Prompt,
+            Summary = summary
+        };
+    }
+
+    private static AiQueryResponse FormatWorstTransactions(
+        AiQueryExecutionResult executionResult,
+        AiQueryInterpretation interpretation)
+    {
+        var timeWindowLabel = string.IsNullOrWhiteSpace(executionResult.TimeWindowLabel)
+            ? interpretation.TimeWindowLabel
+            : executionResult.TimeWindowLabel;
+
+        var summary =
+            $"Showing {executionResult.MatchedCount} of the worst transactions across {timeWindowLabel}. " +
+            "Results are ranked by highest risk, failed status, amount, and recency to surface the sharpest operational triage candidates first.";
 
         return new AiQueryResponse
         {

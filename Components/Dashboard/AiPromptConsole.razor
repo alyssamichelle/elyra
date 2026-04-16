@@ -1,0 +1,48 @@
+<section class="prompt-console glass-panel">
+    <div class="prompt-console-head">
+        <div>
+            <h2>Ask Elyra anything</h2>
+            <p>Telerik AI prompt workspace backed by deterministic query execution.</p>
+        </div>
+        <span class="prompt-engine-pill">Telerik AI prompt + safe parser</span>
+    </div>
+
+    <div class="prompt-console-body">
+        <TelerikAIPrompt @bind-Prompt="@_prompt"
+                         PromptSuggestions="@PromptSuggestions"
+                         EnableSpeechToText="true"
+                         OnPromptRequest="HandlePromptRequestAsync">
+            <AIPromptViews>
+                <AIPromptPromptView ButtonText="Prompt" />
+                <AIPromptOutputView ButtonText="Result" />
+            </AIPromptViews>
+            <AIPromptSettings>
+                <AIPromptSpeechToTextButtonSettings FillMode="@ThemeConstants.Button.FillMode.Outline" />
+            </AIPromptSettings>
+        </TelerikAIPrompt>
+    </div>
+</section>
+
+@code {
+    private string _prompt = string.Empty;
+
+    [Parameter]
+    public IReadOnlyList<string> SuggestedPrompts { get; set; } = Array.Empty<string>();
+
+    [Parameter]
+    public EventCallback<AIPromptPromptRequestEventArgs> OnPromptRequest { get; set; }
+
+    private List<string> PromptSuggestions => SuggestedPrompts.ToList();
+
+    private async Task HandlePromptRequestAsync(AIPromptPromptRequestEventArgs args)
+    {
+        if (string.IsNullOrWhiteSpace(args.Prompt))
+        {
+            args.IsCancelled = true;
+            return;
+        }
+
+        await OnPromptRequest.InvokeAsync(args);
+        _prompt = args.Prompt;
+    }
+}

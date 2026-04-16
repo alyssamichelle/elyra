@@ -30,6 +30,10 @@ build_metadata.AdditionalFiles.CssScope =
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9EYXNoYm9hcmQvQWlBc3Npc3RhbnRTaWRlYmFyLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 
 
+[/Users/alyssanicoll/Development/prompt-challenge/take-5/elyra/Components/Dashboard/AiPromptConsole.razor]
+build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9EYXNoYm9hcmQvQWlQcm9tcHRDb25zb2xlLnJhem9y
+build_metadata.AdditionalFiles.CssScope = 
+
 [/Users/alyssanicoll/Development/prompt-challenge/take-5/elyra/Components/Dashboard/KpiCardsSection.razor]
 build_metadata.AdditionalFiles.TargetPath = Q29tcG9uZW50cy9EYXNoYm9hcmQvS3BpQ2FyZHNTZWN0aW9uLnJhem9y
 build_metadata.AdditionalFiles.CssScope = 

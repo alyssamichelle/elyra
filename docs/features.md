@@ -1,32 +1,53 @@
 # Elyra Dashboard Features
 
-## Ask Elyra Anything (Top Bar AI Query)
+## Implementation Notes
 
-The top-bar input now supports real, structured AI-like actions against the live transaction dataset without requiring an external LLM.
+- Dark/light mode restoration was requested with this prompt:
+  - `I love the added components, however, we seemed to have lost our dark mode/light mode button. I need you to bring that back and ensure using playwright that all components are using a dark theme in dark mode and a light theme in light mode.`
+- Implementation summary for that request:
+  - Restored the top-bar theme toggle in `Components/Dashboard/TopBar.razor`.
+  - Added page-level theme state wiring (`theme-dark` / `theme-light`) in `Pages/Index.razor`.
+  - Added dual-mode style coverage in `wwwroot/css/site.css` for dashboard shell + Telerik Prompt/Chat/Grid surfaces.
+  - Verified in Playwright that dark mode and light mode both apply to main shell, AI prompt, chat, and grid toolbar.
+- User recording for this implementation:
+  - [screen.studio/share/cB59H50i?state=uploading](https://screen.studio/share/cB59H50i?state=uploading)
+
+## Ask Elyra Anything (Telerik AI Prompt Experience)
+
+The dashboard now uses the Telerik Blazor `AIPrompt` component as the primary prompt surface, while keeping deterministic, allowlisted transaction-query execution behind it.
 
 ### Feature behavior
 
+- Presents a Telerik-native prompt workflow:
+  - `TelerikAIPrompt` prompt + output views
+  - built-in prompt suggestions
+  - speech-to-text entry for prompt capture
+  - AI result mirrored into the right-side assistant panel
 - Parses plain-English prompts into supported intents.
-- Executes the interpreted query against the existing grid transaction data.
-- Updates the Smart Grid view with the matching operational subset.
-- Displays an **AI Result** explanation (1–3 sentences) in the AI sidebar.
-- Handles unsupported prompts safely with fallback guidance and suggested examples.
-- **Current behavior + user test:** Enter `show failed > £3k` and click **Ask**; the grid should narrow to failed high-value rows and the sidebar should show an AI explanation matching that filtered result.
+- Executes interpreted queries against live transaction data.
+- Updates Smart Grid to the matching operational subset.
+- Keeps parser/executor fallback active so demos remain functional without an external LLM.
+- Handles unsupported prompts safely with fallback guidance.
+- Expands phrase coverage for higher-variance language such as `show me the worst transactions in the last month`.
+- **Current behavior + user test:** Enter `show me the worst transactions in the last month` and click **Generate**; the grid should narrow to the highest-risk transactions from the last month and the sidebar should show the same explanation.
 
 ### Supported queries
 
 - `show failed > £3k`
 - `why did failures increase`
 - `top risky merchants`
+- `show me the worst transactions in the last month`
 
 ### How to use it
 
-1. In the top bar, type a prompt into **Ask Elyra anything…**.
-2. Click **Ask**.
+1. Use the Telerik **Ask Elyra anything** prompt console under the top bar.
+2. Enter a prompt (or click one of the prompt suggestions) and click **Generate**.
 3. Review:
-   - the updated grid rows (filtered/re-ranked based on intent)
-   - the **AI Result** card in the right sidebar for an explanation
-4. If your prompt is unsupported, use one of the suggested examples shown in the fallback response.
+   - the `AIPrompt` output view
+   - the **AI Result** card in the assistant sidebar
+   - Smart Grid updates for matching rows
+   - the assistant chat thread for follow-up prompts
+4. For ambiguous/unsupported prompts, follow fallback guidance and suggestions.
 
 ### Implementation details (modular design)
 
@@ -48,9 +69,11 @@ Supporting models:
 
 UI wiring:
 
-- `Components/Dashboard/TopBar.razor` (captures prompt and triggers Ask action)
-- `Pages/Index.razor` (orchestrates parse/execute/format and updates visible grid data)
-- `Components/Dashboard/AiAssistantSidebar.razor` (renders AI Result panel)
+- `Components/Dashboard/AiPromptConsole.razor` (`TelerikAIPrompt` wrapper with prompt suggestions and speech-to-text)
+- `Pages/Index.razor` (orchestrates prompt events from Telerik AI surfaces and maintains assistant conversation)
+- `Components/Dashboard/TopBar.razor` (branding + live mode controls)
+- `Components/Dashboard/AiAssistantSidebar.razor` (`TelerikChat` sidebar + AI result card + insight actions)
+- `Components/Dashboard/SmartGridSection.razor` (Grid smart box AI entry points + export actions)
 
 ### Validation method
 
@@ -64,17 +87,20 @@ UI wiring:
 ### Validation evidence
 
 1. `show failed > £3k`
-   - Grid narrowed to failed, high-value transactions.
-   - AI Result explanation correctly described findings.
+   - Grid narrows to failed, high-value transactions.
+   - `AIPrompt` output and sidebar AI result record the interpreted result.
 2. `why did failures increase`
-   - Grid switched to recent failure-focused subset.
-   - AI Result provided concise likely cause summary.
+   - Grid switches to recent failure-focused subset.
+   - Output view and sidebar response report rail/decline reason interpretation.
 3. `top risky merchants`
-   - Grid reflected top risky merchant-related transactions.
-   - AI Result listed merchants and explained sorting focus.
-4. Unsupported query (example: `explain settlements by weather`)
+   - Grid reflects top risky merchant-related transactions.
+   - Chat follow-up prompt path also updates the grid and sidebar summary correctly.
+4. `show me the worst transactions in the last month`
+   - Grid narrows to 25 highest-risk transactions within the last-month window.
+   - Runtime validation confirmed pager count dropped to `1 - 8 of 25 items`.
+5. Unsupported query (example: `explain settlements by weather`)
    - No crash.
-   - Fallback message appeared with example prompts.
+   - Fallback response appears with guidance/suggestions.
 
 Console checks during validation reported no active runtime errors for this feature flow.
 
@@ -97,6 +123,7 @@ The right-side AI action buttons now execute real analytics logic against the **
   - high-risk failed cluster above threshold (`failed`, `risk >= 75`, `amount >= £3k`)
 - Adds timestamped insight cards in the AI sidebar for each button run.
 - Flags anomaly-linked transactions directly in the grid with a `Flagged` badge.
+- Uses Telerik `Chat` as the main conversational container for follow-up prompts and guided suggestions.
 - **Current behavior + user test:** Apply a filter (for example `failed`), click **Summarize current view**, then click **Detect anomalies**; summary metrics should reflect the filtered subset and anomaly runs should add insights plus `Flagged` badges on related rows.
 
 ### How to use it

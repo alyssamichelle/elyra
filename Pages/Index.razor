@@ -2,25 +2,34 @@
 @using elyra.Services.AiQuery
 @using elyra.Services.AiInsights
 @using elyra.Services.DemoData
+@using Telerik.Blazor.Components
 @implements IAsyncDisposable
 
 <PageTitle>Elyra Dashboard</PageTitle>
 
-<main class="dashboard-page">
-    <TopBar OnAskPrompt="HandleAskPromptAsync"
-            LiveModeEnabled="@LiveModeEnabled"
+<main class="dashboard-page @(IsDarkMode ? "theme-dark" : "theme-light")">
+    <TopBar LiveModeEnabled="@LiveModeEnabled"
+            IsDarkMode="@IsDarkMode"
+            OnThemeModeChanged="HandleThemeModeChangedAsync"
             OnLiveModeChanged="HandleLiveModeChangedAsync" />
+    <AiPromptConsole OnPromptRequest="HandleAskPromptRequestAsync"
+                     SuggestedPrompts="@SuggestedPrompts" />
 
     <section class="dashboard-main">
         <div class="dashboard-left">
             <KpiCardsSection Metrics="@Kpis" />
             <SmartGridSection Transactions="@VisibleTransactions"
                               HighlightedTransactionIds="@FlaggedTransactionIds"
+                              PromptSuggestions="@SuggestedPrompts"
+                              OnSemanticSearch="HandleSemanticSearchAsync"
+                              OnPromptRequest="HandleGridPromptRequestAsync"
                               OnCurrentViewChanged="HandleCurrentViewChangedAsync" />
         </div>
         <AiAssistantSidebar Conversation="@Conversation"
                             QueryResponse="@LatestQueryResponse"
                             Insights="@Insights"
+                            SuggestedPrompts="@SuggestedPrompts"
+                            OnSendPrompt="HandleChatPromptAsync"
                             OnSummarizeCurrentView="SummarizeCurrentViewAsync"
                             OnDetectAnomalies="DetectAnomaliesAsync" />
     </section>
@@ -35,16 +44,24 @@
     private IReadOnlySet<string> FlaggedTransactionIds = new HashSet<string>();
     private AiQueryInterpretation? ActiveQueryInterpretation;
     private bool LiveModeEnabled;
+    private bool IsDarkMode = true;
     private int _liveSequence = 184200;
     private CancellationTokenSource? _liveModeCts;
     private readonly List<KpiMetric> Kpis = [];
-
-    private readonly List<AiMessage> Conversation =
+    private readonly List<string> SuggestedPrompts =
     [
-        new() { Sender = "User", Message = "Why did failed payments increase today?" },
-        new() { Sender = "Elyra AI", Message = "Failure rate is up 1.8% mostly from card acquirer retries at Camden Mobility Co and Manchester Tech Supplies in the last 2 hours." },
-        new() { Sender = "User", Message = "Any fraud patterns I should know?" },
-        new() { Sender = "Elyra AI", Message = "Three failed Faster Payments over £3k have risk scores above 75. Sheffield Telecom Retail is the strongest anomaly cluster." }
+        "show failed > £3k",
+        "why did failures increase",
+        "top risky merchants",
+        "show me the worst transactions in the last month"
+    ];
+
+    private readonly List<AiChatMessage> Conversation =
+    [
+        CreateMessage("user", "User", "Why did failed payments increase today?"),
+        CreateMessage("assistant", "Elyra AI", "Failure rate is up 1.8% mostly from card acquirer retries at Camden Mobility Co and Manchester Tech Supplies in the last 2 hours."),
+        CreateMessage("user", "User", "Any fraud patterns I should know?"),
+        CreateMessage("assistant", "Elyra AI", "Three failed Faster Payments over £3k have risk scores above 75. Sheffield Telecom Retail is the strongest anomaly cluster.")
     ];
 
     protected override void OnInitialized()
@@ -56,19 +73,9 @@
         RebuildKpis();
     }
 
-    private Task HandleAskPromptAsync(string prompt)
+    private Task HandleAskPromptRequestAsync(AIPromptPromptRequestEventArgs args)
     {
-        var interpretation = AiQueryParser.Parse(prompt);
-        var executionResult = AiQueryExecutor.Execute(interpretation, AllTransactions, DateTime.Now);
-
-        ActiveQueryInterpretation = interpretation;
-        VisibleTransactions = executionResult.Rows;
-        CurrentGridView = executionResult.Rows;
-        FlaggedTransactionIds = new HashSet<string>();
-        LatestQueryResponse = AiQueryResponseFormatter.Format(interpretation, executionResult);
-        RebuildKpis();
-
-        return Task.CompletedTask;
+        return ProcessPromptAsync(args.Prompt, response => args.Output = BuildPromptOutput(response));
     }
 
     private Task HandleCurrentViewChangedAsync(IReadOnlyList<TransactionRecord> rows)
@@ -76,6 +83,22 @@
         CurrentGridView = rows;
         return Task.CompletedTask;
     }
+
+    private Task HandleChatPromptAsync(string prompt) => ProcessPromptAsync(prompt);
+
+    private Task HandleSemanticSearchAsync(GridSmartBoxSemanticSearchEventArgs args)
+    {
+        if (string.IsNullOrWhiteSpace(args.Text))
+        {
+            ResetGridContext();
+            return Task.CompletedTask;
+        }
+
+        return ProcessPromptAsync(args.Text, appendConversation: false);
+    }
+
+    private Task HandleGridPromptRequestAsync(GridSmartBoxAIAssistantPromptRequestEventArgs args) =>
+        ProcessPromptAsync(args.Text, appendConversation: false);
 
     private Task HandleLiveModeChangedAsync(bool isEnabled)
     {
@@ -94,6 +117,12 @@
             StopLiveMode();
         }
 
+        return Task.CompletedTask;
+    }
+
+    private Task HandleThemeModeChangedAsync(bool isDarkMode)
+    {
+        IsDarkMode = isDarkMode;
         return Task.CompletedTask;
     }
 
@@ -297,6 +326,67 @@
 
     private static bool IsPositiveDelta(decimal current, decimal previous) => current >= previous;
 
+    private Task ProcessPromptAsync(
+        string prompt,
+        Action<AiQueryResponse>? applyOutput = null,
+        bool appendConversation = true)
+    {
+        if (string.IsNullOrWhiteSpace(prompt))
+        {
+            return Task.CompletedTask;
+        }
+
+        var now = DateTime.Now;
+        var interpretation = AiQueryParser.Parse(prompt);
+        var executionResult = AiQueryExecutor.Execute(interpretation, AllTransactions, now);
+
+        ActiveQueryInterpretation = interpretation;
+        VisibleTransactions = executionResult.Rows;
+        CurrentGridView = executionResult.Rows;
+        FlaggedTransactionIds = new HashSet<string>();
+        LatestQueryResponse = AiQueryResponseFormatter.Format(interpretation, executionResult);
+        RebuildKpis();
+
+        applyOutput?.Invoke(LatestQueryResponse);
+
+        if (appendConversation)
+        {
+            Conversation.Add(CreateMessage("user", "User", interpretation.Prompt));
+            Conversation.Add(CreateMessage("assistant", "Elyra AI", BuildPromptOutput(LatestQueryResponse)));
+        }
+
+        return Task.CompletedTask;
+    }
+
+    private void ResetGridContext()
+    {
+        ActiveQueryInterpretation = null;
+        VisibleTransactions = AllTransactions;
+        CurrentGridView = VisibleTransactions;
+        FlaggedTransactionIds = new HashSet<string>();
+        LatestQueryResponse = null;
+        RebuildKpis();
+    }
+
+    private static string BuildPromptOutput(AiQueryResponse response)
+    {
+        if (!response.IsFallback || response.Suggestions.Count == 0)
+        {
+            return response.Summary;
+        }
+
+        return $"{response.Summary} Suggested prompts: {string.Join(", ", response.Suggestions)}.";
+    }
+
+    private static AiChatMessage CreateMessage(string authorId, string authorName, string text) =>
+        new()
+        {
+            AuthorId = authorId,
+            AuthorName = authorName,
+            Text = text,
+            Timestamp = DateTime.Now
+        };
+
     private static string FormatDelta(decimal current, decimal previous)
     {
         if (previous == 0m)
@@ -331,4 +421,5 @@
         StopLiveMode();
         return ValueTask.CompletedTask;
     }
+
 }

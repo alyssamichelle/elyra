@@ -8,5 +8,9 @@ public sealed class AiQueryInterpretation
 
     public decimal? AmountThreshold { get; init; }
 
+    public TimeSpan? LookbackWindow { get; init; }
+
+    public string TimeWindowLabel { get; init; } = string.Empty;
+
     public bool IsKnown => Intent != AiQueryIntent.Unknown;
 }
