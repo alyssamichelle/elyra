@@ -26,6 +26,7 @@
         <TelerikChat Data="@Conversation"
                      AuthorId="@CurrentUserId"
                      Suggestions="@ChatSuggestions"
+                     OnSuggestionClick="HandleSuggestionClickAsync"
                      TextField="@nameof(AiChatMessage.Text)"
                      AuthorIdField="@nameof(AiChatMessage.AuthorId)"
                      AuthorNameField="@nameof(AiChatMessage.AuthorName)"
@@ -96,5 +97,15 @@
         }
 
         return OnSendPrompt.InvokeAsync(args.Message);
+    }
+
+    private Task HandleSuggestionClickAsync(ChatSuggestionClickEventArgs args)
+    {
+        if (string.IsNullOrWhiteSpace(args.Suggestion))
+        {
+            return Task.CompletedTask;
+        }
+
+        return OnSendPrompt.InvokeAsync(args.Suggestion);
     }
 }
