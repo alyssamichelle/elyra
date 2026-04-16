@@ -102,3 +102,5 @@ This document reflects the current implementation in the `elyra` codebase and in
 - `features.md` claims were reconciled against current source files listed above.
 - Screenshot evidence was captured against a running app instance at `http://localhost:5083`.
 - Where runtime wording differs by prompt phrasing, behavior is documented as implemented by parser rules in source.
+- Quick video walkthrough of the application in its current state/features:
+  - [Screen Studio walkthrough](https://screen.studio/share/7eDXMd4n?state=uploading)
