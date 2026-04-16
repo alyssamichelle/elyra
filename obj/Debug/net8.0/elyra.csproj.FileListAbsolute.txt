@@ -66,3 +66,4 @@
 /Users/alyssanicoll/Development/prompt-challenge/take-5/elyra/obj/Debug/net8.0/elyra.pdb
 /Users/alyssanicoll/Development/prompt-challenge/take-5/elyra/obj/Debug/net8.0/elyra.genruntimeconfig.cache
 /Users/alyssanicoll/Development/prompt-challenge/take-5/elyra/obj/Debug/net8.0/ref/elyra.dll
+/Users/alyssanicoll/Development/prompt-challenge/take-5/elyra/obj/Debug/net8.0/elyra.sourcelink.json
