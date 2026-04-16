@@ -46,7 +46,7 @@
     private readonly List<AiInsightMessage> Insights = [];
     private IReadOnlySet<string> FlaggedTransactionIds = new HashSet<string>();
     private AiQueryInterpretation? ActiveQueryInterpretation;
-    private bool LiveModeEnabled;
+    private bool LiveModeEnabled = true;
     private bool IsDarkMode = true;
     private bool IsSidebarCollapsed;
     private int _liveSequence = 184200;
@@ -148,6 +148,10 @@
         RebuildKpis();
         VisibleSuggestedPrompts = BuildVisibleSuggestedPrompts();
         StartSuggestionRotation();
+        if (LiveModeEnabled)
+        {
+            StartLiveMode();
+        }
     }
 
     private Task HandleAskPromptRequestAsync(AIPromptPromptRequestEventArgs args) =>

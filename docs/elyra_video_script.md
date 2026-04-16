@@ -8,7 +8,7 @@ This isn’t just a UI demo.
 It’s an example of what happens when you combine AI-powered workflows with real, production-ready UI components.
 
 And the cool part?  
-This entire application was generated using the Telerik UI Generator.
+This entire application was scaffolded with Telerik UI Generator, then extended with deterministic AI workflows.
 
 ---
 
@@ -36,9 +36,10 @@ That gave me:
 From there, I layered in:
 - AI-driven filtering
 - deterministic query handling
+- grid semantic search and AI smart actions
 - and real insight generation
 
-So this isn’t just generated UI — it’s generated and extended into a real application.
+So this isn’t just generated UI — it’s scaffolded and extended into a real application.
 
 ---
 
@@ -46,7 +47,7 @@ So this isn’t just generated UI — it’s generated and extended into a real 
 
 The first major feature is “Ask Elyra Anything.”
 
-This is powered by the Telerik AI Prompt component.
+This is powered by the Telerik AI Prompt component, with speech-to-text enabled.
 
 So I can type something like:
 “show failed transactions above £3k”
@@ -74,7 +75,9 @@ This is where most of the work happens.
 It:
 - reflects AI-filtered results
 - shows transaction risk visually
-- surfaces flagged anomalies directly in the UI
+- surfaces flagged anomalies directly in the UI after anomaly detection runs
+- includes Telerik Grid SmartBox AI assistant + semantic search in the toolbar
+- supports CSV and Excel export for operational handoff
 
 The grid becomes more than a table.
 
@@ -95,9 +98,9 @@ You can ask:
 “why did failed payments increase today?”
 
 Elyra will:
-- analyze the dataset
-- identify patterns
-- return a grounded explanation
+- run deterministic insight logic on the current dataset
+- identify repeatable patterns like failure clusters and rail spikes
+- return a grounded explanation tied to visible rows
 
 There are also actions like:
 - Summarize current view
@@ -120,6 +123,8 @@ Every few seconds:
 - new transactions come in
 - KPIs update
 - AI context refreshes
+- active query context is reapplied
+- notable live events stream into the sidebar
 
 So you’re interacting with a living system, not static data.
 
@@ -142,6 +147,8 @@ This moves us from:
 to:
 “a system that actually understands your data”
 
+And because we surface AI run telemetry in the sidebar — including engine, model, latency, and mapped intent — viewers can see exactly what executed on each prompt.
+
 ---
 
 ## Wrap-Up (6:40–7:10)
@@ -149,7 +156,8 @@ to:
 So that’s Elyra — built with:
 - Telerik UI Generator
 - Telerik Blazor components
-- AI-driven interaction
+- Telerik AI Prompt + Grid SmartBox AI experiences
+- deterministic AI-driven interaction
 
 If you’re building dashboards today, this is the direction things are heading.
 
