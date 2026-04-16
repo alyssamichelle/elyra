@@ -211,6 +211,11 @@ a {
     background: rgba(12, 22, 41, 0.52);
 }
 
+/* Prompt-only UX: no Prompt/Result view switcher */
+.prompt-console .k-prompt-header {
+    display: none !important;
+}
+
 /* Telerik Prompt renders as .k-prompt; default spacing is very tall */
 .prompt-console .k-prompt-content {
     padding: 6px 8px !important;
@@ -219,17 +224,6 @@ a {
 
 .prompt-console .k-prompt-view {
     gap: 6px !important;
-}
-
-.prompt-console .k-prompt-header .k-toolbar {
-    padding: 3px 5px !important;
-    min-height: 0 !important;
-}
-
-.prompt-console .k-prompt-header .k-toolbar .k-button {
-    padding: 0.18rem 0.55rem !important;
-    min-height: 1.55rem !important;
-    font-size: 0.7rem !important;
 }
 
 .prompt-console .k-prompt-expander {

@@ -73,10 +73,8 @@
         RebuildKpis();
     }
 
-    private Task HandleAskPromptRequestAsync(AIPromptPromptRequestEventArgs args)
-    {
-        return ProcessPromptAsync(args.Prompt, response => args.Output = BuildPromptOutput(response));
-    }
+    private Task HandleAskPromptRequestAsync(AIPromptPromptRequestEventArgs args) =>
+        ProcessPromptAsync(args.Prompt);
 
     private Task HandleCurrentViewChangedAsync(IReadOnlyList<TransactionRecord> rows)
     {
