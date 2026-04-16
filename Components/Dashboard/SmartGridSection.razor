@@ -19,8 +19,7 @@
         </div>
     </div>
 
-    <TelerikGrid @ref="@_gridRef"
-                 Data="@FilteredTransactions"
+    <TelerikGrid Data="@FilteredTransactions"
                  Pageable="true"
                  PageSize="8"
                  Height="540px"
@@ -44,17 +43,18 @@
                     </GridToolBarSmartBoxToolSearchSettings>
                 </GridToolBarSmartBoxToolSettings>
             </GridToolBarSmartBoxTool>
-            <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline"
-                           Size="@ThemeConstants.Button.Size.Small"
-                           OnClick="ExportToExcelAsync">
+            <GridToolBarSpacerTool />
+            <GridToolBarExcelExportTool>
                 Export Excel
-            </TelerikButton>
-            <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline"
-                           Size="@ThemeConstants.Button.Size.Small"
-                           OnClick="ExportToCsvAsync">
+            </GridToolBarExcelExportTool>
+            <GridToolBarCsvExportTool>
                 Export CSV
-            </TelerikButton>
+            </GridToolBarCsvExportTool>
         </GridToolBar>
+        <GridExport>
+            <GridExcelExport FileName="elyra-transactions" />
+            <GridCsvExport FileName="elyra-transactions" />
+        </GridExport>
         <GridColumns>
             <GridColumn Title="Transaction ID" Width="180px">
                 <Template Context="item">
@@ -134,8 +134,6 @@
 
     [Parameter]
     public EventCallback<GridSmartBoxAIAssistantPromptRequestEventArgs> OnPromptRequest { get; set; }
-
-    private TelerikGrid<TransactionRecord>? _gridRef;
 
     private IEnumerable<TransactionRecord> FilteredTransactions =>
         Transactions.Where(FilterByText).Where(FilterByChip);
@@ -238,23 +236,4 @@
     private Task HandleAIPromptRequestAsync(GridSmartBoxAIAssistantPromptRequestEventArgs args) =>
         OnPromptRequest.InvokeAsync(args);
 
-    private async Task ExportToExcelAsync()
-    {
-        if (_gridRef is null)
-        {
-            return;
-        }
-
-        await _gridRef.ExportToExcelAsync();
-    }
-
-    private async Task ExportToCsvAsync()
-    {
-        if (_gridRef is null)
-        {
-            return;
-        }
-
-        await _gridRef.ExportToCsvAsync();
-    }
 }

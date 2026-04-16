@@ -778,6 +778,23 @@ a {
     display: flex;
     gap: 0.45rem;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+.txn-grid .k-grid-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.65rem;
+    flex-wrap: wrap;
+    padding-block: 0.3rem;
+}
+
+.txn-grid .k-grid-toolbar .k-grid-excel,
+.txn-grid .k-grid-toolbar .k-grid-csv {
+    width: auto;
+    min-width: 0;
+    flex: 0 0 auto;
 }
 
 .ai-action-btn {
