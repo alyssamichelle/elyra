@@ -49,7 +49,7 @@ The first major feature is “Ask Elyra Anything.”
 
 This is powered by the Telerik AI Prompt component, with speech-to-text enabled.
 
-So I can type something like:
+So I can type something or speak something like:
 “show failed transactions above £3k”
 
 And what happens is:
