@@ -1,10 +1,20 @@
-<aside class="ai-sidebar glass-panel">
+<aside class="ai-sidebar glass-panel @(IsCollapsed ? "ai-sidebar-collapsed" : string.Empty)">
     <div class="ai-header">
         <h2>Elyra AI</h2>
-        <span class="status-dot">Live</span>
+        @if (!IsCollapsed)
+        {
+            <span class="status-dot">Live</span>
+        }
+        <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Flat"
+                       Size="@ThemeConstants.Button.Size.Small"
+                       Class="sidebar-collapse-btn"
+                       AriaLabel="@(IsCollapsed ? "Expand AI sidebar" : "Collapse AI sidebar")"
+                       OnClick="ToggleCollapsedAsync">
+            @(IsCollapsed ? "»" : "«")
+        </TelerikButton>
     </div>
 
-    @if (QueryResponse is not null)
+    @if (!IsCollapsed && QueryResponse is not null)
     {
         <div class="ai-result-card @(QueryResponse.IsFallback ? "ai-result-fallback" : "ai-result-success")">
             <div class="ai-result-title">AI Result</div>
@@ -22,45 +32,54 @@
         </div>
     }
 
-    <div class="ai-chat-shell">
-        <TelerikChat Data="@Conversation"
-                     AuthorId="@CurrentUserId"
-                     Suggestions="@ChatSuggestions"
-                     OnSuggestionClick="HandleSuggestionClickAsync"
-                     TextField="@nameof(AiChatMessage.Text)"
-                     AuthorIdField="@nameof(AiChatMessage.AuthorId)"
-                     AuthorNameField="@nameof(AiChatMessage.AuthorName)"
-                     TimestampField="@nameof(AiChatMessage.Timestamp)"
-                     Height="320px"
-                     OnSendMessage="HandleSendMessageAsync">
-        </TelerikChat>
-    </div>
+    @if (!IsCollapsed)
+    {
+        <div class="ai-chat-shell">
+            <TelerikChat Data="@Conversation"
+                         AuthorId="@CurrentUserId"
+                         Suggestions="@ChatSuggestions"
+                         OnSuggestionClick="HandleSuggestionClickAsync"
+                         TextField="@nameof(AiChatMessage.Text)"
+                         AuthorIdField="@nameof(AiChatMessage.AuthorId)"
+                         AuthorNameField="@nameof(AiChatMessage.AuthorName)"
+                         TimestampField="@nameof(AiChatMessage.Timestamp)"
+                         Height="320px"
+                         OnSendMessage="HandleSendMessageAsync">
+            </TelerikChat>
+        </div>
+    }
 
-    <div class="insights-thread">
-        @foreach (var insight in Insights)
-        {
-            <div class="insight-card @(insight.Severity == "warning" ? "insight-warning" : "insight-info")">
-                <div class="insight-head">
-                    <span>@insight.Title</span>
-                    <span>@insight.Timestamp.ToString("HH:mm:ss")</span>
+    @if (!IsCollapsed)
+    {
+        <div class="insights-thread">
+            @foreach (var insight in Insights)
+            {
+                <div class="insight-card @(insight.Severity == "warning" ? "insight-warning" : "insight-info")">
+                    <div class="insight-head">
+                        <span>@insight.Title</span>
+                        <span>@insight.Timestamp.ToString("HH:mm:ss")</span>
+                    </div>
+                    <p>@insight.Message</p>
                 </div>
-                <p>@insight.Message</p>
-            </div>
-        }
-    </div>
+            }
+        </div>
+    }
 
-    <div class="ai-actions">
-        <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
-                       Class="ai-action-btn"
-                       OnClick="@(async () => await OnSummarizeCurrentView.InvokeAsync())">
-            Summarize current view
-        </TelerikButton>
-        <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline"
-                       Class="ai-action-btn"
-                       OnClick="@(async () => await OnDetectAnomalies.InvokeAsync())">
-            Detect anomalies
-        </TelerikButton>
-    </div>
+    @if (!IsCollapsed)
+    {
+        <div class="ai-actions">
+            <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                           Class="ai-action-btn"
+                           OnClick="@(async () => await OnSummarizeCurrentView.InvokeAsync())">
+                Summarize current view
+            </TelerikButton>
+            <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline"
+                           Class="ai-action-btn"
+                           OnClick="@(async () => await OnDetectAnomalies.InvokeAsync())">
+                Detect anomalies
+            </TelerikButton>
+        </div>
+    }
 </aside>
 
 @code {
@@ -87,6 +106,12 @@
     [Parameter]
     public EventCallback<string> OnSendPrompt { get; set; }
 
+    [Parameter]
+    public bool IsCollapsed { get; set; }
+
+    [Parameter]
+    public EventCallback OnToggleCollapsed { get; set; }
+
     private List<string> ChatSuggestions => SuggestedPrompts.ToList();
 
     private Task HandleSendMessageAsync(ChatSendMessageEventArgs args)
@@ -108,4 +133,6 @@
 
         return OnSendPrompt.InvokeAsync(args.Suggestion);
     }
+
+    private Task ToggleCollapsedAsync() => OnToggleCollapsed.InvokeAsync();
 }

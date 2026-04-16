@@ -23,6 +23,14 @@ public static class AiQueryResponseFormatter
             AiQueryIntent.WhyFailuresIncreased => FormatFailureIncrease(executionResult, interpretation),
             AiQueryIntent.TopRiskyMerchants => FormatTopRisky(executionResult, interpretation),
             AiQueryIntent.WorstTransactions => FormatWorstTransactions(executionResult, interpretation),
+            AiQueryIntent.ColumnTransactionIdView => FormatColumnView(interpretation, executionResult, "Transaction ID ordered view applied."),
+            AiQueryIntent.ColumnMerchantView => FormatMerchantView(interpretation, executionResult),
+            AiQueryIntent.ColumnAmountView => FormatColumnView(interpretation, executionResult, "Amount-ranked view applied (highest values first)."),
+            AiQueryIntent.ColumnCurrencyView => FormatCurrencyView(interpretation, executionResult),
+            AiQueryIntent.ColumnStatusView => FormatStatusView(interpretation, executionResult),
+            AiQueryIntent.ColumnPaymentRailView => FormatPaymentRailView(interpretation, executionResult),
+            AiQueryIntent.ColumnRiskScoreView => FormatColumnView(interpretation, executionResult, "Risk-score focus applied (highest risk first)."),
+            AiQueryIntent.ColumnTimestampView => FormatColumnView(interpretation, executionResult, "Timestamp-recency view applied (latest first)."),
             _ => FormatFallback(interpretation)
         };
     }
@@ -93,6 +101,72 @@ public static class AiQueryResponseFormatter
         {
             Prompt = interpretation.Prompt,
             Summary = summary
+        };
+    }
+
+    private static AiQueryResponse FormatColumnView(
+        AiQueryInterpretation interpretation,
+        AiQueryExecutionResult executionResult,
+        string detail) =>
+        new()
+        {
+            Prompt = interpretation.Prompt,
+            Summary = $"Showing {executionResult.MatchedCount} transactions. {detail}"
+        };
+
+    private static AiQueryResponse FormatMerchantView(
+        AiQueryInterpretation interpretation,
+        AiQueryExecutionResult executionResult)
+    {
+        var merchants = executionResult.TopMerchants.Count == 0
+            ? "none"
+            : string.Join(", ", executionResult.TopMerchants);
+
+        return new AiQueryResponse
+        {
+            Prompt = interpretation.Prompt,
+            Summary = $"Showing {executionResult.MatchedCount} transactions for merchant concentration hotspots: {merchants}."
+        };
+    }
+
+    private static AiQueryResponse FormatCurrencyView(
+        AiQueryInterpretation interpretation,
+        AiQueryExecutionResult executionResult)
+    {
+        var scope = string.IsNullOrWhiteSpace(interpretation.CurrencyFilter)
+            ? "all currencies"
+            : interpretation.CurrencyFilter;
+        return new AiQueryResponse
+        {
+            Prompt = interpretation.Prompt,
+            Summary = $"Showing {executionResult.MatchedCount} transactions across {scope}, sorted for currency analysis."
+        };
+    }
+
+    private static AiQueryResponse FormatStatusView(
+        AiQueryInterpretation interpretation,
+        AiQueryExecutionResult executionResult)
+    {
+        var status = string.IsNullOrWhiteSpace(interpretation.StatusFilter) ? "Failed" : interpretation.StatusFilter;
+        return new AiQueryResponse
+        {
+            Prompt = interpretation.Prompt,
+            Summary = $"Showing {executionResult.MatchedCount} transactions with status '{status}', ordered by latest timestamp."
+        };
+    }
+
+    private static AiQueryResponse FormatPaymentRailView(
+        AiQueryInterpretation interpretation,
+        AiQueryExecutionResult executionResult)
+    {
+        var rail = string.IsNullOrWhiteSpace(interpretation.PaymentRailFilter)
+            ? executionResult.PrimaryDriver
+            : interpretation.PaymentRailFilter;
+        rail = string.IsNullOrWhiteSpace(rail) ? "the primary rail" : rail;
+        return new AiQueryResponse
+        {
+            Prompt = interpretation.Prompt,
+            Summary = $"Showing {executionResult.MatchedCount} transactions for {rail} so payment-rail behavior is isolated."
         };
     }
 

@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("elyra")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+71f65e12aac4e90f06520bf69e31f13e9dd172db")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3a7a636ca443bc7b9ec2b6d872e6207d8eb1b68e")]
 [assembly: System.Reflection.AssemblyProductAttribute("elyra")]
 [assembly: System.Reflection.AssemblyTitleAttribute("elyra")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

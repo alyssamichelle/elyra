@@ -13,14 +13,14 @@
             OnThemeModeChanged="HandleThemeModeChangedAsync"
             OnLiveModeChanged="HandleLiveModeChangedAsync" />
     <AiPromptConsole OnPromptRequest="HandleAskPromptRequestAsync"
-                     SuggestedPrompts="@SuggestedPrompts" />
+                     SuggestedPrompts="@VisibleSuggestedPrompts" />
 
-    <section class="dashboard-main">
+    <section class="dashboard-main @(IsSidebarCollapsed ? "sidebar-collapsed" : string.Empty)">
         <div class="dashboard-left">
             <KpiCardsSection Metrics="@Kpis" />
             <SmartGridSection Transactions="@VisibleTransactions"
                               HighlightedTransactionIds="@FlaggedTransactionIds"
-                              PromptSuggestions="@SuggestedPrompts"
+                              PromptSuggestions="@VisibleSuggestedPrompts"
                               OnSemanticSearch="HandleSemanticSearchAsync"
                               OnPromptRequest="HandleGridPromptRequestAsync"
                               OnCurrentViewChanged="HandleCurrentViewChangedAsync" />
@@ -28,7 +28,9 @@
         <AiAssistantSidebar Conversation="@Conversation"
                             QueryResponse="@LatestQueryResponse"
                             Insights="@Insights"
-                            SuggestedPrompts="@SuggestedPrompts"
+                            SuggestedPrompts="@VisibleSuggestedPrompts"
+                            IsCollapsed="@IsSidebarCollapsed"
+                            OnToggleCollapsed="ToggleSidebarCollapsedAsync"
                             OnSendPrompt="HandleChatPromptAsync"
                             OnSummarizeCurrentView="SummarizeCurrentViewAsync"
                             OnDetectAnomalies="DetectAnomaliesAsync" />
@@ -45,16 +47,88 @@
     private AiQueryInterpretation? ActiveQueryInterpretation;
     private bool LiveModeEnabled;
     private bool IsDarkMode = true;
+    private bool IsSidebarCollapsed;
     private int _liveSequence = 184200;
     private CancellationTokenSource? _liveModeCts;
+    private CancellationTokenSource? _suggestionRotationCts;
+    private const int SuggestionWindowSize = 4;
+    private const int SuggestionRotationSeconds = 20;
+    private int _columnPromptStartIndex;
+    private int _analyticsPromptIndex;
+    private int _thresholdPromptIndex;
     private readonly List<KpiMetric> Kpis = [];
-    private readonly List<string> SuggestedPrompts =
+    private static readonly IReadOnlyList<string> ColumnPrompts =
+    [
+        "show recent transaction ids",
+        "show merchant hotspots",
+        "show top merchants by volume",
+        "show largest amounts",
+        "show transactions by currency",
+        "show GBP transactions by amount",
+        "show USD transactions by amount",
+        "show failed transactions",
+        "show card acquirer transactions",
+        "show open banking transactions",
+        "show faster payments transactions",
+        "show high risk transactions",
+        "show risk score view",
+        "show most recent transactions",
+        "show latest transactions",
+        "show timestamp order"
+    ];
+
+    private static readonly IReadOnlyList<string> AnalyticsPrompts =
+    [
+        "why did failures increase",
+        "why have failures increased",
+        "why are failed payments up",
+        "explain failed payment spike",
+        "what caused failed transactions to rise",
+        "why did failure rate spike",
+        "why are failures rising",
+        "why did failed transactions increase",
+        "what is driving failed payments up",
+        "explain why failures are up",
+        "why did failed payments spike today",
+        "explain why failed transactions are rising"
+    ];
+
+    private static readonly IReadOnlyList<string> MerchantRiskPrompts =
+    [
+        "top risky merchants",
+        "show top risky merchants",
+        "show riskiest merchants",
+        "show highest risk merchants"
+    ];
+
+    private static readonly IReadOnlyList<string> WorstTransactionPrompts =
+    [
+        "show me the worst transactions in the last month",
+        "show worst transactions last month",
+        "show riskiest transactions in the last week",
+        "show highest risk payments today",
+        "show worst payments in the past 30 days"
+    ];
+
+    private static readonly IReadOnlyList<string> ThresholdPrompts =
     [
         "show failed > £3k",
-        "why did failures increase",
-        "top risky merchants",
-        "show me the worst transactions in the last month"
+        "show failed over £4k",
+        "show failed above £2.5k",
+        "show failed > £5k",
+        "show failed over £6k",
+        "show failed above £1.2k",
+        "show failed > 2k",
+        "show failed above 750",
+        "show failed over £8k",
+        "show failed above £9.5k",
+        "show failed > £10k"
     ];
+
+    private static readonly IReadOnlyList<string> RotatingAnalyticsPrompts =
+        AnalyticsPrompts.Concat(MerchantRiskPrompts).Concat(WorstTransactionPrompts).ToList();
+
+    private IReadOnlyList<string> VisibleSuggestedPrompts = Array.Empty<string>();
 
     private readonly List<AiChatMessage> Conversation =
     [
@@ -71,6 +145,8 @@
         VisibleTransactions = AllTransactions;
         CurrentGridView = VisibleTransactions;
         RebuildKpis();
+        VisibleSuggestedPrompts = BuildVisibleSuggestedPrompts();
+        StartSuggestionRotation();
     }
 
     private Task HandleAskPromptRequestAsync(AIPromptPromptRequestEventArgs args) =>
@@ -124,6 +200,12 @@
         return Task.CompletedTask;
     }
 
+    private Task ToggleSidebarCollapsedAsync()
+    {
+        IsSidebarCollapsed = !IsSidebarCollapsed;
+        return Task.CompletedTask;
+    }
+
     private Task SummarizeCurrentViewAsync()
     {
         var summary = AiInsightsEngine.SummarizeCurrentView(CurrentGridView, DateTime.Now);
@@ -166,6 +248,73 @@
         _liveModeCts.Cancel();
         _liveModeCts.Dispose();
         _liveModeCts = null;
+    }
+
+    private void StartSuggestionRotation()
+    {
+        StopSuggestionRotation();
+        _suggestionRotationCts = new CancellationTokenSource();
+        _ = RunSuggestionRotationLoopAsync(_suggestionRotationCts.Token);
+    }
+
+    private void StopSuggestionRotation()
+    {
+        if (_suggestionRotationCts is null)
+        {
+            return;
+        }
+
+        _suggestionRotationCts.Cancel();
+        _suggestionRotationCts.Dispose();
+        _suggestionRotationCts = null;
+    }
+
+    private async Task RunSuggestionRotationLoopAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(SuggestionRotationSeconds));
+        while (!cancellationToken.IsCancellationRequested &&
+               await timer.WaitForNextTickAsync(cancellationToken))
+        {
+            await InvokeAsync(() =>
+            {
+                _columnPromptStartIndex = (_columnPromptStartIndex + 2) % ColumnPrompts.Count;
+                _analyticsPromptIndex = (_analyticsPromptIndex + 1) % RotatingAnalyticsPrompts.Count;
+                _thresholdPromptIndex = (_thresholdPromptIndex + 1) % ThresholdPrompts.Count;
+                VisibleSuggestedPrompts = BuildVisibleSuggestedPrompts();
+                StateHasChanged();
+            });
+        }
+    }
+
+    private IReadOnlyList<string> BuildVisibleSuggestedPrompts()
+    {
+        var prompts = new List<string>(SuggestionWindowSize);
+        AddPromptIfUnique(prompts, ColumnPrompts[_columnPromptStartIndex % ColumnPrompts.Count]);
+        AddPromptIfUnique(prompts, ColumnPrompts[(_columnPromptStartIndex + 1) % ColumnPrompts.Count]);
+        AddPromptIfUnique(prompts, RotatingAnalyticsPrompts[_analyticsPromptIndex % RotatingAnalyticsPrompts.Count]);
+        AddPromptIfUnique(prompts, ThresholdPrompts[_thresholdPromptIndex % ThresholdPrompts.Count]);
+
+        if (prompts.Count < SuggestionWindowSize)
+        {
+            foreach (var prompt in ColumnPrompts.Concat(RotatingAnalyticsPrompts).Concat(ThresholdPrompts))
+            {
+                AddPromptIfUnique(prompts, prompt);
+                if (prompts.Count >= SuggestionWindowSize)
+                {
+                    break;
+                }
+            }
+        }
+
+        return prompts;
+    }
+
+    private static void AddPromptIfUnique(List<string> prompts, string prompt)
+    {
+        if (!prompts.Contains(prompt, StringComparer.OrdinalIgnoreCase))
+        {
+            prompts.Add(prompt);
+        }
     }
 
     private async Task RunLiveModeLoopAsync(CancellationToken cancellationToken)
@@ -417,6 +566,7 @@
     public ValueTask DisposeAsync()
     {
         StopLiveMode();
+        StopSuggestionRotation();
         return ValueTask.CompletedTask;
     }
 

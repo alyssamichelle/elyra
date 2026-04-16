@@ -12,5 +12,13 @@ public sealed class AiQueryInterpretation
 
     public string TimeWindowLabel { get; init; } = string.Empty;
 
+    public string StatusFilter { get; init; } = string.Empty;
+
+    public string CurrencyFilter { get; init; } = string.Empty;
+
+    public string PaymentRailFilter { get; init; } = string.Empty;
+
+    public int? MinRiskScore { get; init; }
+
     public bool IsKnown => Intent != AiQueryIntent.Unknown;
 }

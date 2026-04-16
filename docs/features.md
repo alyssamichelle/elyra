@@ -30,6 +30,9 @@ This document reflects the current implementation in the `elyra` codebase and in
   - Parse: `Services/AiQuery/AiQueryParser.cs:L12-L76`
   - Execute: `Services/AiQuery/AiQueryExecutor.cs:L7-L20`
   - Format response/fallback: `Services/AiQuery/AiQueryResponseFormatter.cs:L16-L27`
+- Prompt intent coverage now includes column-oriented actions in addition to analytics:
+  - `Transaction ID`, `Merchant`, `Amount`, `Currency`, `Status`, `Payment Rail`, `Risk Score`, `Timestamp`
+  - `Models/AiQueryIntent.cs`
 - Prompt results update grid scope and sidebar AI result.
   - `Pages/Index.razor:L329-L359`
   - `Components/Dashboard/AiAssistantSidebar.razor:L7-L23`
@@ -44,6 +47,9 @@ This document reflects the current implementation in the `elyra` codebase and in
 - Worst transactions with optional time window parsing (`last month`, `last week`, etc.):
   - `Services/AiQuery/AiQueryParser.cs:L57-L69`
   - `Services/AiQuery/AiQueryParser.cs:L107-L130`
+- Column prompts:
+  - transaction-id view, merchant concentration, amount ranking, currency view, failed-status view, payment rail focus, risk-score focus, timestamp recency
+  - `Services/AiQuery/AiQueryParser.cs`, `Services/AiQuery/AiQueryExecutor.cs`
 
 ### Playwright evidence
 
@@ -51,6 +57,10 @@ This document reflects the current implementation in the `elyra` codebase and in
   - `docs/elyra-after-pager-fix.png`
 - Alternate prompt capture (fallback path visible for unsupported wording variant):
   - `docs/suggestion-contrast-verified.png`
+- Rotating suggestion architecture:
+  - 4 visible suggestions every 20 seconds, deterministic mix of `2 column + 1 analytics + 1 threshold`
+  - exactly one threshold prompt visible per cycle
+  - `Pages/Index.razor`
 
 ## Feature 2: Functional AI Sidebar Actions
 
