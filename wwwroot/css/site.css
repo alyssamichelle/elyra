@@ -733,6 +733,71 @@ a {
     background: rgba(40, 53, 88, 0.38);
 }
 
+.ai-run-card,
+.ai-activity-card {
+    border-radius: 12px;
+    padding: 0.6rem 0.65rem;
+    border: 1px solid rgba(137, 146, 214, 0.22);
+    background: linear-gradient(150deg, rgba(28, 41, 74, 0.34), rgba(17, 29, 55, 0.48));
+}
+
+.ai-run-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #b8c8f5;
+    margin-bottom: 0.35rem;
+}
+
+.ai-run-empty {
+    margin: 0;
+    color: #aebfe3;
+    font-size: 0.78rem;
+}
+
+.ai-run-grid {
+    margin: 0;
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0.24rem 0.55rem;
+    align-items: start;
+}
+
+.ai-run-grid dt {
+    color: #9fb2d8;
+    font-size: 0.7rem;
+}
+
+.ai-run-grid dd {
+    margin: 0;
+    color: #deebff;
+    font-size: 0.74rem;
+}
+
+.ai-activity-list {
+    display: grid;
+    gap: 0.4rem;
+}
+
+.ai-activity-item {
+    border: 1px solid rgba(130, 145, 186, 0.2);
+    border-radius: 9px;
+    background: rgba(18, 30, 55, 0.45);
+    padding: 0.45rem 0.5rem;
+}
+
+.ai-activity-meta {
+    color: #9eb1d8;
+    font-size: 0.66rem;
+    margin-bottom: 0.18rem;
+}
+
+.ai-activity-item p {
+    margin: 0;
+    color: #dbe8ff;
+    font-size: 0.76rem;
+}
+
 .chat-thread {
     display: grid;
     gap: 0.5rem;

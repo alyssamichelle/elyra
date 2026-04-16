@@ -2,6 +2,7 @@
 @using elyra.Services.AiQuery
 @using elyra.Services.AiInsights
 @using elyra.Services.DemoData
+@using System.Diagnostics
 @using Telerik.Blazor.Components
 @implements IAsyncDisposable
 
@@ -27,11 +28,10 @@
         </div>
         <AiAssistantSidebar Conversation="@Conversation"
                             QueryResponse="@LatestQueryResponse"
+                            LatestTelemetry="@LatestTelemetry"
                             Insights="@Insights"
-                            SuggestedPrompts="@VisibleSuggestedPrompts"
                             IsCollapsed="@IsSidebarCollapsed"
                             OnToggleCollapsed="ToggleSidebarCollapsedAsync"
-                            OnSendPrompt="HandleChatPromptAsync"
                             OnSummarizeCurrentView="SummarizeCurrentViewAsync"
                             OnDetectAnomalies="DetectAnomaliesAsync" />
     </section>
@@ -42,6 +42,7 @@
     private IReadOnlyList<TransactionRecord> VisibleTransactions = Array.Empty<TransactionRecord>();
     private IReadOnlyList<TransactionRecord> CurrentGridView = Array.Empty<TransactionRecord>();
     private AiQueryResponse? LatestQueryResponse;
+    private AiRunTelemetry? LatestTelemetry;
     private readonly List<AiInsightMessage> Insights = [];
     private IReadOnlySet<string> FlaggedTransactionIds = new HashSet<string>();
     private AiQueryInterpretation? ActiveQueryInterpretation;
@@ -484,6 +485,7 @@
         }
 
         var now = DateTime.Now;
+        var stopwatch = Stopwatch.StartNew();
         var interpretation = AiQueryParser.Parse(prompt);
         var executionResult = AiQueryExecutor.Execute(interpretation, AllTransactions, now);
 
@@ -492,6 +494,14 @@
         CurrentGridView = executionResult.Rows;
         FlaggedTransactionIds = new HashSet<string>();
         LatestQueryResponse = AiQueryResponseFormatter.Format(interpretation, executionResult);
+        stopwatch.Stop();
+        LatestTelemetry = new AiRunTelemetry
+        {
+            DurationMs = (int)stopwatch.ElapsedMilliseconds,
+            IsFallback = LatestQueryResponse.IsFallback,
+            Intent = interpretation.Intent.ToString(),
+            Timestamp = now
+        };
         RebuildKpis();
 
         applyOutput?.Invoke(LatestQueryResponse);

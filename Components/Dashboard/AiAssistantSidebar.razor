@@ -34,18 +34,54 @@
 
     @if (!IsCollapsed)
     {
-        <div class="ai-chat-shell">
-            <TelerikChat Data="@Conversation"
-                         AuthorId="@CurrentUserId"
-                         Suggestions="@ChatSuggestions"
-                         OnSuggestionClick="HandleSuggestionClickAsync"
-                         TextField="@nameof(AiChatMessage.Text)"
-                         AuthorIdField="@nameof(AiChatMessage.AuthorId)"
-                         AuthorNameField="@nameof(AiChatMessage.AuthorName)"
-                         TimestampField="@nameof(AiChatMessage.Timestamp)"
-                         Height="320px"
-                         OnSendMessage="HandleSendMessageAsync">
-            </TelerikChat>
+        <div class="ai-run-card">
+            <div class="ai-run-title">AI Run Details</div>
+            @if (LatestTelemetry is null)
+            {
+                <p class="ai-run-empty">Run a prompt to view model and performance telemetry.</p>
+            }
+            else
+            {
+                <dl class="ai-run-grid">
+                    <dt>Engine</dt>
+                    <dd>@LatestTelemetry.Engine</dd>
+                    <dt>Model</dt>
+                    <dd>@LatestTelemetry.Model</dd>
+                    <dt>Latency</dt>
+                    <dd>@LatestTelemetry.DurationMs ms</dd>
+                    <dt>Tokens</dt>
+                    <dd>N/A (deterministic pipeline)</dd>
+                    <dt>Intent</dt>
+                    <dd>@LatestTelemetry.Intent</dd>
+                    <dt>Result</dt>
+                    <dd>@(LatestTelemetry.IsFallback ? "Fallback" : "Mapped")</dd>
+                    <dt>Executed</dt>
+                    <dd>@LatestTelemetry.Timestamp.ToString("HH:mm:ss")</dd>
+                </dl>
+            }
+        </div>
+    }
+
+    @if (!IsCollapsed)
+    {
+        <div class="ai-activity-card">
+            <div class="ai-run-title">AI Activity</div>
+            @if (RecentAssistantMessages.Count == 0)
+            {
+                <p class="ai-run-empty">No assistant findings yet.</p>
+            }
+            else
+            {
+                <div class="ai-activity-list">
+                    @foreach (var item in RecentAssistantMessages)
+                    {
+                        <div class="ai-activity-item">
+                            <div class="ai-activity-meta">@item.Timestamp.ToString("HH:mm:ss")</div>
+                            <p>@item.Text</p>
+                        </div>
+                    }
+                </div>
+            }
         </div>
     }
 
@@ -83,13 +119,14 @@
 </aside>
 
 @code {
-    private const string CurrentUserId = "user";
-
     [Parameter]
     public IReadOnlyList<AiChatMessage> Conversation { get; set; } = Array.Empty<AiChatMessage>();
 
     [Parameter]
     public AiQueryResponse? QueryResponse { get; set; }
+
+    [Parameter]
+    public AiRunTelemetry? LatestTelemetry { get; set; }
 
     [Parameter]
     public IReadOnlyList<AiInsightMessage> Insights { get; set; } = Array.Empty<AiInsightMessage>();
@@ -101,38 +138,17 @@
     public EventCallback OnDetectAnomalies { get; set; }
 
     [Parameter]
-    public IReadOnlyList<string> SuggestedPrompts { get; set; } = Array.Empty<string>();
-
-    [Parameter]
-    public EventCallback<string> OnSendPrompt { get; set; }
-
-    [Parameter]
     public bool IsCollapsed { get; set; }
 
     [Parameter]
     public EventCallback OnToggleCollapsed { get; set; }
 
-    private List<string> ChatSuggestions => SuggestedPrompts.ToList();
-
-    private Task HandleSendMessageAsync(ChatSendMessageEventArgs args)
-    {
-        if (string.IsNullOrWhiteSpace(args.Message))
-        {
-            return Task.CompletedTask;
-        }
-
-        return OnSendPrompt.InvokeAsync(args.Message);
-    }
-
-    private Task HandleSuggestionClickAsync(ChatSuggestionClickEventArgs args)
-    {
-        if (string.IsNullOrWhiteSpace(args.Suggestion))
-        {
-            return Task.CompletedTask;
-        }
-
-        return OnSendPrompt.InvokeAsync(args.Suggestion);
-    }
+    private IReadOnlyList<AiChatMessage> RecentAssistantMessages =>
+        Conversation
+            .Where(x => x.AuthorId == "assistant")
+            .OrderByDescending(x => x.Timestamp)
+            .Take(4)
+            .ToList();
 
     private Task ToggleCollapsedAsync() => OnToggleCollapsed.InvokeAsync();
 }
