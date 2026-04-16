@@ -1,5 +1,6 @@
 ﻿@page "/"
 @using elyra.Services.AiQuery
+@using elyra.Services.AiInsights
 
 <PageTitle>Elyra Dashboard</PageTitle>
 
@@ -9,15 +10,24 @@
     <section class="dashboard-main">
         <div class="dashboard-left">
             <KpiCardsSection Metrics="@Kpis" />
-            <SmartGridSection Transactions="@VisibleTransactions" />
+            <SmartGridSection Transactions="@VisibleTransactions"
+                              HighlightedTransactionIds="@FlaggedTransactionIds"
+                              OnCurrentViewChanged="HandleCurrentViewChangedAsync" />
         </div>
-        <AiAssistantSidebar Conversation="@Conversation" QueryResponse="@LatestQueryResponse" />
+        <AiAssistantSidebar Conversation="@Conversation"
+                            QueryResponse="@LatestQueryResponse"
+                            Insights="@Insights"
+                            OnSummarizeCurrentView="SummarizeCurrentViewAsync"
+                            OnDetectAnomalies="DetectAnomaliesAsync" />
     </section>
 </main>
 
 @code {
     private IReadOnlyList<TransactionRecord> VisibleTransactions = Array.Empty<TransactionRecord>();
+    private IReadOnlyList<TransactionRecord> CurrentGridView = Array.Empty<TransactionRecord>();
     private AiQueryResponse? LatestQueryResponse;
+    private readonly List<AiInsightMessage> Insights = [];
+    private IReadOnlySet<string> FlaggedTransactionIds = new HashSet<string>();
 
     private readonly List<KpiMetric> Kpis =
     [
@@ -56,6 +66,7 @@
     protected override void OnInitialized()
     {
         VisibleTransactions = Transactions;
+        CurrentGridView = Transactions;
     }
 
     private Task HandleAskPromptAsync(string prompt)
@@ -64,8 +75,41 @@
         var executionResult = AiQueryExecutor.Execute(interpretation, Transactions, DateTime.Now);
 
         VisibleTransactions = executionResult.Rows;
+        CurrentGridView = executionResult.Rows;
+        FlaggedTransactionIds = new HashSet<string>();
         LatestQueryResponse = AiQueryResponseFormatter.Format(interpretation, executionResult);
 
         return Task.CompletedTask;
+    }
+
+    private Task HandleCurrentViewChangedAsync(IReadOnlyList<TransactionRecord> rows)
+    {
+        CurrentGridView = rows;
+        return Task.CompletedTask;
+    }
+
+    private Task SummarizeCurrentViewAsync()
+    {
+        var summary = AiInsightsEngine.SummarizeCurrentView(CurrentGridView, DateTime.Now);
+        Insights.Insert(0, summary);
+        TrimInsights();
+        return Task.CompletedTask;
+    }
+
+    private Task DetectAnomaliesAsync()
+    {
+        var anomalyResult = AiInsightsEngine.DetectAnomalies(CurrentGridView, DateTime.Now);
+        FlaggedTransactionIds = anomalyResult.FlaggedTransactionIds;
+        Insights.Insert(0, anomalyResult.Insight);
+        TrimInsights();
+        return Task.CompletedTask;
+    }
+
+    private void TrimInsights()
+    {
+        while (Insights.Count > 8)
+        {
+            Insights.RemoveAt(Insights.Count - 1);
+        }
     }
 }

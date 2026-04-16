@@ -12,7 +12,7 @@
             {
                 <TelerikButton Class="@GetChipClass(chip)"
                                Size="@ThemeConstants.Button.Size.Small"
-                               OnClick="@(() => ToggleChip(chip))">
+                               OnClick="@(async () => await ToggleChip(chip))">
                     @chip
                 </TelerikButton>
             }
@@ -27,7 +27,21 @@
                  Resizable="true"
                  Class="txn-grid">
         <GridColumns>
-            <GridColumn Field="@nameof(TransactionRecord.TransactionId)" Title="Transaction ID" Width="160px" />
+            <GridColumn Title="Transaction ID" Width="180px">
+                <Template Context="item">
+                    @{
+                        var row = (TransactionRecord)item;
+                        var isFlagged = HighlightedTransactionIds.Contains(row.TransactionId);
+                    }
+                    <span class="txn-id @(isFlagged ? "txn-id-flagged" : string.Empty)">
+                        @row.TransactionId
+                        @if (isFlagged)
+                        {
+                            <span class="txn-flag-pill">Flagged</span>
+                        }
+                    </span>
+                </Template>
+            </GridColumn>
             <GridColumn Field="@nameof(TransactionRecord.Merchant)" Title="Merchant" Width="180px" />
             <GridColumn Title="Amount" Width="130px">
                 <Template Context="item">
@@ -77,17 +91,35 @@
     [Parameter]
     public IReadOnlyList<TransactionRecord> Transactions { get; set; } = Array.Empty<TransactionRecord>();
 
+    [Parameter]
+    public EventCallback<IReadOnlyList<TransactionRecord>> OnCurrentViewChanged { get; set; }
+
+    [Parameter]
+    public IReadOnlySet<string> HighlightedTransactionIds { get; set; } = new HashSet<string>();
+
     private IEnumerable<TransactionRecord> FilteredTransactions =>
         Transactions.Where(FilterByText).Where(FilterByChip);
 
-    private void OnFilterTextChanged(string value)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        _filterText = value;
+        if (!firstRender)
+        {
+            return;
+        }
+
+        await PublishCurrentViewAsync();
     }
 
-    private void ToggleChip(string chip)
+    private async Task OnFilterTextChanged(string value)
+    {
+        _filterText = value;
+        await PublishCurrentViewAsync();
+    }
+
+    private async Task ToggleChip(string chip)
     {
         _activeChip = _activeChip == chip ? null : chip;
+        await PublishCurrentViewAsync();
     }
 
     private string GetChipClass(string chip) => _activeChip == chip ? "chip-active" : "chip-idle";
@@ -146,4 +178,15 @@
             >= 50 => "risk-medium",
             _ => "risk-low"
         };
+
+    private async Task PublishCurrentViewAsync()
+    {
+        if (!OnCurrentViewChanged.HasDelegate)
+        {
+            return;
+        }
+
+        var rows = FilteredTransactions.ToList();
+        await OnCurrentViewChanged.InvokeAsync(rows);
+    }
 }

@@ -32,11 +32,28 @@
         }
     </div>
 
+    <div class="insights-thread">
+        @foreach (var insight in Insights)
+        {
+            <div class="insight-card @(insight.Severity == "warning" ? "insight-warning" : "insight-info")">
+                <div class="insight-head">
+                    <span>@insight.Title</span>
+                    <span>@insight.Timestamp.ToString("HH:mm:ss")</span>
+                </div>
+                <p>@insight.Message</p>
+            </div>
+        }
+    </div>
+
     <div class="ai-actions">
-        <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary" Class="ai-action-btn">
+        <TelerikButton ThemeColor="@ThemeConstants.Button.ThemeColor.Primary"
+                       Class="ai-action-btn"
+                       OnClick="@(async () => await OnSummarizeCurrentView.InvokeAsync())">
             Summarize current view
         </TelerikButton>
-        <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline" Class="ai-action-btn">
+        <TelerikButton FillMode="@ThemeConstants.Button.FillMode.Outline"
+                       Class="ai-action-btn"
+                       OnClick="@(async () => await OnDetectAnomalies.InvokeAsync())">
             Detect anomalies
         </TelerikButton>
     </div>
@@ -48,4 +65,13 @@
 
     [Parameter]
     public AiQueryResponse? QueryResponse { get; set; }
+
+    [Parameter]
+    public IReadOnlyList<AiInsightMessage> Insights { get; set; } = Array.Empty<AiInsightMessage>();
+
+    [Parameter]
+    public EventCallback OnSummarizeCurrentView { get; set; }
+
+    [Parameter]
+    public EventCallback OnDetectAnomalies { get; set; }
 }
