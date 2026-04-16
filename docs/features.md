@@ -9,7 +9,7 @@
   - Added page-level theme state wiring (`theme-dark` / `theme-light`) in `Pages/Index.razor`.
   - Added dual-mode style coverage in `wwwroot/css/site.css` for dashboard shell + Telerik Prompt/Chat/Grid surfaces.
   - Verified in Playwright that dark mode and light mode both apply to main shell, AI prompt, chat, and grid toolbar.
-- User recording for this implementation:
+- Alyssa's recording for this implementation:
   - [screen.studio/share/cB59H50i?state=uploading](https://screen.studio/share/cB59H50i?state=uploading)
 
 ## Ask Elyra Anything (Telerik AI Prompt Experience)
