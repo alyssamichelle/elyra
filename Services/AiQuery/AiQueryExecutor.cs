@@ -51,12 +51,19 @@ public static class AiQueryExecutor
             .OrderByDescending(g => g.Count())
             .Select(g => g.Key)
             .FirstOrDefault() ?? "mixed rails";
+        var topDeclineReason = rows
+            .Where(x => x.DeclineReason != "None")
+            .GroupBy(x => x.DeclineReason)
+            .OrderByDescending(g => g.Count())
+            .Select(g => g.Key)
+            .FirstOrDefault() ?? "issuer declines";
 
         return new AiQueryExecutionResult
         {
             Rows = rows,
             RecentFailedCount = rows.Count,
-            PrimaryDriver = driver
+            PrimaryDriver = driver,
+            TopDeclineReason = topDeclineReason
         };
     }
 

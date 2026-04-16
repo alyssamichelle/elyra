@@ -1,11 +1,15 @@
 ﻿@page "/"
 @using elyra.Services.AiQuery
 @using elyra.Services.AiInsights
+@using elyra.Services.DemoData
+@implements IAsyncDisposable
 
 <PageTitle>Elyra Dashboard</PageTitle>
 
 <main class="dashboard-page">
-    <TopBar OnAskPrompt="HandleAskPromptAsync" />
+    <TopBar OnAskPrompt="HandleAskPromptAsync"
+            LiveModeEnabled="@LiveModeEnabled"
+            OnLiveModeChanged="HandleLiveModeChangedAsync" />
 
     <section class="dashboard-main">
         <div class="dashboard-left">
@@ -23,37 +27,17 @@
 </main>
 
 @code {
+    private readonly List<TransactionRecord> AllTransactions = [];
     private IReadOnlyList<TransactionRecord> VisibleTransactions = Array.Empty<TransactionRecord>();
     private IReadOnlyList<TransactionRecord> CurrentGridView = Array.Empty<TransactionRecord>();
     private AiQueryResponse? LatestQueryResponse;
     private readonly List<AiInsightMessage> Insights = [];
     private IReadOnlySet<string> FlaggedTransactionIds = new HashSet<string>();
-
-    private readonly List<KpiMetric> Kpis =
-    [
-        new() { Label = "Total Volume", Value = "£2.84M", Delta = "+8.4%", Positive = true, ProgressPercent = 84 },
-        new() { Label = "Successful Payments", Value = "18,942", Delta = "+3.1%", Positive = true, ProgressPercent = 76 },
-        new() { Label = "Failed Transactions", Value = "312", Delta = "+1.8%", Positive = false, ProgressPercent = 34 },
-        new() { Label = "Avg. Processing Time", Value = "1.9s", Delta = "-0.4s", Positive = true, ProgressPercent = 68 },
-        new() { Label = "Fraud Alerts", Value = "27", Delta = "+0.9%", Positive = false, ProgressPercent = 41 },
-        new() { Label = "Net Settlement", Value = "£2.51M", Delta = "+6.2%", Positive = true, ProgressPercent = 79 }
-    ];
-
-    private readonly List<TransactionRecord> Transactions =
-    [
-        new() { TransactionId = "TXN-2024-184201", Merchant = "Brixton Grocers Ltd", Amount = 4821.45m, Currency = "GBP", Status = "Successful", PaymentRail = "Faster Payments", RiskScore = 24, Timestamp = DateTime.Now.AddMinutes(-16) },
-        new() { TransactionId = "TXN-2024-184202", Merchant = "Camden Mobility Co", Amount = 1125.00m, Currency = "GBP", Status = "Failed", PaymentRail = "Card Acquirer", RiskScore = 72, Timestamp = DateTime.Now.AddMinutes(-28) },
-        new() { TransactionId = "TXN-2024-184203", Merchant = "Leeds Home Energy", Amount = 3499.99m, Currency = "GBP", Status = "Successful", PaymentRail = "Open Banking", RiskScore = 31, Timestamp = DateTime.Now.AddMinutes(-34) },
-        new() { TransactionId = "TXN-2024-184204", Merchant = "Edinburgh Travel Hub", Amount = 684.20m, Currency = "GBP", Status = "Pending", PaymentRail = "BACS", RiskScore = 48, Timestamp = DateTime.Now.AddMinutes(-42) },
-        new() { TransactionId = "TXN-2024-184205", Merchant = "Bristol Care Pharmacy", Amount = 5120.10m, Currency = "GBP", Status = "Successful", PaymentRail = "Faster Payments", RiskScore = 18, Timestamp = DateTime.Now.AddHours(-1) },
-        new() { TransactionId = "TXN-2024-184206", Merchant = "Manchester Tech Supplies", Amount = 2930.87m, Currency = "GBP", Status = "Failed", PaymentRail = "Card Acquirer", RiskScore = 83, Timestamp = DateTime.Now.AddHours(-2) },
-        new() { TransactionId = "TXN-2024-184207", Merchant = "Norwich Fresh Market", Amount = 254.37m, Currency = "GBP", Status = "Successful", PaymentRail = "Open Banking", RiskScore = 12, Timestamp = DateTime.Now.AddHours(-3) },
-        new() { TransactionId = "TXN-2024-184208", Merchant = "Sheffield Telecom Retail", Amount = 7712.11m, Currency = "GBP", Status = "Failed", PaymentRail = "Faster Payments", RiskScore = 91, Timestamp = DateTime.Now.AddHours(-4) },
-        new() { TransactionId = "TXN-2024-184209", Merchant = "Oxford Digital Press", Amount = 1875.33m, Currency = "GBP", Status = "Successful", PaymentRail = "BACS", RiskScore = 29, Timestamp = DateTime.Now.AddHours(-5) },
-        new() { TransactionId = "TXN-2024-184210", Merchant = "Glasgow Urban Transit", Amount = 4012.55m, Currency = "GBP", Status = "Pending", PaymentRail = "Card Acquirer", RiskScore = 64, Timestamp = DateTime.Now.AddHours(-6) },
-        new() { TransactionId = "TXN-2024-184211", Merchant = "Liverpool Fashion Wharf", Amount = 933.90m, Currency = "GBP", Status = "Successful", PaymentRail = "Open Banking", RiskScore = 17, Timestamp = DateTime.Now.AddHours(-7) },
-        new() { TransactionId = "TXN-2024-184212", Merchant = "Cardiff Bistro Collective", Amount = 3288.70m, Currency = "GBP", Status = "Failed", PaymentRail = "Faster Payments", RiskScore = 76, Timestamp = DateTime.Now.AddHours(-8) }
-    ];
+    private AiQueryInterpretation? ActiveQueryInterpretation;
+    private bool LiveModeEnabled;
+    private int _liveSequence = 184200;
+    private CancellationTokenSource? _liveModeCts;
+    private readonly List<KpiMetric> Kpis = [];
 
     private readonly List<AiMessage> Conversation =
     [
@@ -65,19 +49,24 @@
 
     protected override void OnInitialized()
     {
-        VisibleTransactions = Transactions;
-        CurrentGridView = Transactions;
+        AllTransactions.AddRange(TransactionDataFactory.GenerateSeedData(DateTime.Now, 520));
+        _liveSequence = ExtractHighestSequence(AllTransactions);
+        VisibleTransactions = AllTransactions;
+        CurrentGridView = VisibleTransactions;
+        RebuildKpis();
     }
 
     private Task HandleAskPromptAsync(string prompt)
     {
         var interpretation = AiQueryParser.Parse(prompt);
-        var executionResult = AiQueryExecutor.Execute(interpretation, Transactions, DateTime.Now);
+        var executionResult = AiQueryExecutor.Execute(interpretation, AllTransactions, DateTime.Now);
 
+        ActiveQueryInterpretation = interpretation;
         VisibleTransactions = executionResult.Rows;
         CurrentGridView = executionResult.Rows;
         FlaggedTransactionIds = new HashSet<string>();
         LatestQueryResponse = AiQueryResponseFormatter.Format(interpretation, executionResult);
+        RebuildKpis();
 
         return Task.CompletedTask;
     }
@@ -85,6 +74,26 @@
     private Task HandleCurrentViewChangedAsync(IReadOnlyList<TransactionRecord> rows)
     {
         CurrentGridView = rows;
+        return Task.CompletedTask;
+    }
+
+    private Task HandleLiveModeChangedAsync(bool isEnabled)
+    {
+        if (LiveModeEnabled == isEnabled)
+        {
+            return Task.CompletedTask;
+        }
+
+        LiveModeEnabled = isEnabled;
+        if (LiveModeEnabled)
+        {
+            StartLiveMode();
+        }
+        else
+        {
+            StopLiveMode();
+        }
+
         return Task.CompletedTask;
     }
 
@@ -111,5 +120,215 @@
         {
             Insights.RemoveAt(Insights.Count - 1);
         }
+    }
+
+    private void StartLiveMode()
+    {
+        StopLiveMode();
+        _liveModeCts = new CancellationTokenSource();
+        _ = RunLiveModeLoopAsync(_liveModeCts.Token);
+    }
+
+    private void StopLiveMode()
+    {
+        if (_liveModeCts is null)
+        {
+            return;
+        }
+
+        _liveModeCts.Cancel();
+        _liveModeCts.Dispose();
+        _liveModeCts = null;
+    }
+
+    private async Task RunLiveModeLoopAsync(CancellationToken cancellationToken)
+    {
+        using var timer = new PeriodicTimer(TimeSpan.FromSeconds(4));
+        while (!cancellationToken.IsCancellationRequested && await timer.WaitForNextTickAsync(cancellationToken))
+        {
+            await InvokeAsync(() =>
+            {
+                InjectLiveTransaction();
+                StateHasChanged();
+            });
+        }
+    }
+
+    private void InjectLiveTransaction()
+    {
+        _liveSequence++;
+        var now = DateTime.Now;
+        var transaction = TransactionDataFactory.CreateLiveTransaction(now, _liveSequence);
+        AllTransactions.Insert(0, transaction);
+
+        if (ActiveQueryInterpretation is not null)
+        {
+            var execution = AiQueryExecutor.Execute(ActiveQueryInterpretation, AllTransactions, now);
+            VisibleTransactions = execution.Rows;
+        }
+        else
+        {
+            VisibleTransactions = AllTransactions;
+        }
+
+        RebuildKpis();
+        AddLiveNotableEvent(transaction, now);
+    }
+
+    private void AddLiveNotableEvent(TransactionRecord transaction, DateTime now)
+    {
+        Insights.Insert(0, new AiInsightMessage
+        {
+            Timestamp = now,
+            Title = "Live Feed",
+            Severity = "info",
+            Message = $"{transaction.TransactionId} ingested for {transaction.Merchant} via {transaction.Channel} ({transaction.Country}) at £{transaction.Amount:N2}."
+        });
+
+        var isNotable = transaction.Status == "Failed" &&
+                        (transaction.RiskScore >= 82 || transaction.Amount >= 4500m || transaction.RetryCount >= 2);
+        if (isNotable)
+        {
+            Insights.Insert(0, new AiInsightMessage
+            {
+                Timestamp = now,
+                Title = "Live Event",
+                Severity = "warning",
+                Message = $"{transaction.TransactionId} ({transaction.Merchant}) flagged: {transaction.DeclineReason}, " +
+                          $"issuer code {transaction.IssuerResponseCode}, retry {transaction.RetryCount}, channel {transaction.Channel}."
+            });
+        }
+        TrimInsights();
+    }
+
+    private void RebuildKpis()
+    {
+        Kpis.Clear();
+
+        var ordered = AllTransactions.OrderByDescending(x => x.Timestamp).ToList();
+        var currentWindow = ordered.Take(120).ToList();
+        var previousWindow = ordered.Skip(120).Take(120).ToList();
+
+        Kpis.Add(new KpiMetric
+        {
+            Label = "Total Volume",
+            Value = $"£{currentWindow.Sum(x => x.Amount):N0}",
+            Delta = FormatDelta(
+                currentWindow.Sum(x => x.Amount),
+                previousWindow.Sum(x => x.Amount)),
+            Positive = IsPositiveDelta(
+                currentWindow.Sum(x => x.Amount),
+                previousWindow.Sum(x => x.Amount)),
+            ProgressPercent = ToProgressPercent(currentWindow.Sum(x => x.Amount), 500_000m, 900_000m)
+        });
+
+        Kpis.Add(new KpiMetric
+        {
+            Label = "Successful Payments",
+            Value = currentWindow.Count(x => x.Status == "Successful").ToString(),
+            Delta = FormatDelta(
+                currentWindow.Count(x => x.Status == "Successful"),
+                previousWindow.Count(x => x.Status == "Successful")),
+            Positive = IsPositiveDelta(
+                currentWindow.Count(x => x.Status == "Successful"),
+                previousWindow.Count(x => x.Status == "Successful")),
+            ProgressPercent = ToProgressPercent(currentWindow.Count(x => x.Status == "Successful"), 40m, 100m)
+        });
+
+        Kpis.Add(new KpiMetric
+        {
+            Label = "Failed Transactions",
+            Value = currentWindow.Count(x => x.Status == "Failed").ToString(),
+            Delta = FormatDelta(
+                currentWindow.Count(x => x.Status == "Failed"),
+                previousWindow.Count(x => x.Status == "Failed")),
+            Positive = !IsPositiveDelta(
+                currentWindow.Count(x => x.Status == "Failed"),
+                previousWindow.Count(x => x.Status == "Failed")),
+            ProgressPercent = ToProgressPercent(currentWindow.Count(x => x.Status == "Failed"), 5m, 35m)
+        });
+
+        Kpis.Add(new KpiMetric
+        {
+            Label = "Avg. Processing Time",
+            Value = $"{currentWindow.Average(x => x.ProcessingTimeSeconds):N1}s",
+            Delta = FormatDelta(
+                currentWindow.Average(x => x.ProcessingTimeSeconds),
+                previousWindow.Count == 0 ? currentWindow.Average(x => x.ProcessingTimeSeconds) : previousWindow.Average(x => x.ProcessingTimeSeconds)),
+            Positive = !IsPositiveDelta(
+                currentWindow.Average(x => x.ProcessingTimeSeconds),
+                previousWindow.Count == 0 ? currentWindow.Average(x => x.ProcessingTimeSeconds) : previousWindow.Average(x => x.ProcessingTimeSeconds)),
+            ProgressPercent = ToProgressPercent(currentWindow.Average(x => x.ProcessingTimeSeconds), 0.5m, 3.8m, inverse: true)
+        });
+
+        Kpis.Add(new KpiMetric
+        {
+            Label = "Fraud Alerts",
+            Value = currentWindow.Count(x => x.RiskScore >= 85 || x.DeclineReason == "Suspected fraud").ToString(),
+            Delta = FormatDelta(
+                currentWindow.Count(x => x.RiskScore >= 85 || x.DeclineReason == "Suspected fraud"),
+                previousWindow.Count(x => x.RiskScore >= 85 || x.DeclineReason == "Suspected fraud")),
+            Positive = !IsPositiveDelta(
+                currentWindow.Count(x => x.RiskScore >= 85 || x.DeclineReason == "Suspected fraud"),
+                previousWindow.Count(x => x.RiskScore >= 85 || x.DeclineReason == "Suspected fraud")),
+            ProgressPercent = ToProgressPercent(currentWindow.Count(x => x.RiskScore >= 85 || x.DeclineReason == "Suspected fraud"), 2m, 20m)
+        });
+
+        var netSettlementCurrent = currentWindow.Where(x => x.Status == "Successful").Sum(x => x.Amount);
+        var netSettlementPrevious = previousWindow.Where(x => x.Status == "Successful").Sum(x => x.Amount);
+        Kpis.Add(new KpiMetric
+        {
+            Label = "Net Settlement",
+            Value = $"£{netSettlementCurrent:N0}",
+            Delta = FormatDelta(netSettlementCurrent, netSettlementPrevious),
+            Positive = IsPositiveDelta(netSettlementCurrent, netSettlementPrevious),
+            ProgressPercent = ToProgressPercent(netSettlementCurrent, 350_000m, 800_000m)
+        });
+    }
+
+    private static int ExtractHighestSequence(IEnumerable<TransactionRecord> transactions)
+    {
+        return transactions
+            .Select(x => x.TransactionId.Split('-').LastOrDefault())
+            .Select(x => int.TryParse(x, out var value) ? value : 0)
+            .DefaultIfEmpty(184200)
+            .Max();
+    }
+
+    private static bool IsPositiveDelta(decimal current, decimal previous) => current >= previous;
+
+    private static string FormatDelta(decimal current, decimal previous)
+    {
+        if (previous == 0m)
+        {
+            return current == 0m ? "0.0%" : "+100.0%";
+        }
+
+        var percent = (current - previous) / previous * 100m;
+        var sign = percent >= 0 ? "+" : string.Empty;
+        return $"{sign}{percent:N1}%";
+    }
+
+    private static int ToProgressPercent(decimal value, decimal min, decimal max, bool inverse = false)
+    {
+        if (max <= min)
+        {
+            return 50;
+        }
+
+        var normalized = (value - min) / (max - min);
+        normalized = Math.Clamp(normalized, 0m, 1m);
+        if (inverse)
+        {
+            normalized = 1m - normalized;
+        }
+
+        return (int)Math.Round(normalized * 100m);
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        StopLiveMode();
+        return ValueTask.CompletedTask;
     }
 }

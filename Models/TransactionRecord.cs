@@ -16,5 +16,19 @@ public class TransactionRecord
 
     public int RiskScore { get; init; }
 
+    public string DeclineReason { get; init; } = "None";
+
+    public int RetryCount { get; init; }
+
+    public string IssuerResponseCode { get; init; } = "00";
+
+    public string CustomerSegment { get; init; } = "Retail";
+
+    public string Country { get; init; } = "GB";
+
+    public string Channel { get; init; } = "Web";
+
+    public decimal ProcessingTimeSeconds { get; init; } = 1.9m;
+
     public DateTime Timestamp { get; init; }
 }

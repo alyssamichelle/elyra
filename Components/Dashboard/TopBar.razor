@@ -9,6 +9,12 @@
     </div>
 
     <div class="topbar-actions">
+        <label class="live-toggle">
+            <input type="checkbox"
+                   checked="@LiveModeEnabled"
+                   @onchange="OnLiveModeToggleChanged" />
+            <span>Simulated Live</span>
+        </label>
         <TelerikTextBox Value="@_promptText"
                         ValueChanged="OnPromptChanged"
                         Placeholder="Ask Elyra anything…"
@@ -29,6 +35,12 @@
     [Parameter]
     public EventCallback<string> OnAskPrompt { get; set; }
 
+    [Parameter]
+    public bool LiveModeEnabled { get; set; }
+
+    [Parameter]
+    public EventCallback<bool> OnLiveModeChanged { get; set; }
+
     private void OnPromptChanged(string value)
     {
         _promptText = value;
@@ -37,5 +49,16 @@
     private async Task SubmitPrompt()
     {
         await OnAskPrompt.InvokeAsync(_promptText);
+    }
+
+    private async Task OnLiveModeToggleChanged(ChangeEventArgs args)
+    {
+        var isEnabled = args.Value switch
+        {
+            bool boolValue => boolValue,
+            string text when bool.TryParse(text, out var parsed) => parsed,
+            _ => false
+        };
+        await OnLiveModeChanged.InvokeAsync(isEnabled);
     }
 }

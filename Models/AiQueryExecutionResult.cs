@@ -13,4 +13,6 @@ public sealed class AiQueryExecutionResult
     public int RecentFailedCount { get; init; }
 
     public string PrimaryDriver { get; init; } = string.Empty;
+
+    public string TopDeclineReason { get; init; } = string.Empty;
 }

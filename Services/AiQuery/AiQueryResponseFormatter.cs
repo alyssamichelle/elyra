@@ -47,7 +47,7 @@ public static class AiQueryResponseFormatter
     {
         var summary =
             $"In the last 8 hours, {executionResult.RecentFailedCount} failed transactions are visible. " +
-            $"The largest concentration is on {executionResult.PrimaryDriver}, suggesting rail-specific retry friction.";
+            $"The largest concentration is on {executionResult.PrimaryDriver}, with {executionResult.TopDeclineReason} as the dominant decline reason.";
 
         return new AiQueryResponse
         {
