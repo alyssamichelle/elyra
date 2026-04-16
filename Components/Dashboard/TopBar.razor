@@ -9,8 +9,33 @@
     </div>
 
     <div class="topbar-actions">
-        <TelerikTextBox Placeholder="Ask Elyra anything…" Width="100%" />
+        <TelerikTextBox Value="@_promptText"
+                        ValueChanged="OnPromptChanged"
+                        Placeholder="Ask Elyra anything…"
+                        Width="100%" />
+        <TelerikButton Class="ask-btn"
+                       FillMode="@ThemeConstants.Button.FillMode.Outline"
+                       OnClick="SubmitPrompt">
+            Ask
+        </TelerikButton>
         <button class="icon-btn" aria-label="Notifications">🔔</button>
         <div class="avatar">AN</div>
     </div>
 </header>
+
+@code {
+    private string _promptText = string.Empty;
+
+    [Parameter]
+    public EventCallback<string> OnAskPrompt { get; set; }
+
+    private void OnPromptChanged(string value)
+    {
+        _promptText = value;
+    }
+
+    private async Task SubmitPrompt()
+    {
+        await OnAskPrompt.InvokeAsync(_promptText);
+    }
+}

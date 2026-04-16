@@ -103,6 +103,16 @@ a {
     color: #8ea4c6;
 }
 
+.ask-btn {
+    border-color: rgba(126, 141, 255, 0.45) !important;
+    color: #d7e0ff !important;
+    background: rgba(73, 86, 170, 0.2) !important;
+}
+
+.ask-btn:hover {
+    background: rgba(89, 105, 204, 0.3) !important;
+}
+
 .icon-btn,
 .avatar {
     width: 2rem;
@@ -350,6 +360,57 @@ a {
     border-radius: 50%;
     background: #7f8cff;
     box-shadow: 0 0 8px rgba(131, 142, 255, 0.85);
+}
+
+.ai-result-card {
+    border-radius: 12px;
+    padding: 0.6rem 0.65rem;
+    border: 1px solid rgba(137, 146, 214, 0.25);
+    background: linear-gradient(150deg, rgba(40, 53, 96, 0.36), rgba(24, 37, 71, 0.5));
+}
+
+.ai-result-title {
+    font-size: 0.72rem;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #b8c8f5;
+    margin-bottom: 0.3rem;
+}
+
+.ai-result-prompt,
+.ai-result-summary {
+    margin: 0;
+    font-size: 0.8rem;
+}
+
+.ai-result-prompt {
+    color: #d8e4ff;
+    margin-bottom: 0.25rem;
+}
+
+.ai-result-summary {
+    color: #afbfdf;
+}
+
+.ai-result-fallback {
+    border-color: rgba(185, 161, 111, 0.36);
+    background: linear-gradient(150deg, rgba(88, 73, 35, 0.24), rgba(46, 37, 17, 0.33));
+}
+
+.ai-result-suggestions {
+    margin-top: 0.4rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3rem;
+}
+
+.ai-result-suggestions span {
+    font-size: 0.68rem;
+    padding: 0.12rem 0.38rem;
+    border-radius: 999px;
+    border: 1px solid rgba(167, 179, 211, 0.26);
+    color: #d6e0f4;
+    background: rgba(40, 53, 88, 0.38);
 }
 
 .chat-thread {

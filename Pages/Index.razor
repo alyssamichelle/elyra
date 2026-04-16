@@ -1,20 +1,24 @@
 ﻿@page "/"
+@using elyra.Services.AiQuery
 
 <PageTitle>Elyra Dashboard</PageTitle>
 
 <main class="dashboard-page">
-    <TopBar />
+    <TopBar OnAskPrompt="HandleAskPromptAsync" />
 
     <section class="dashboard-main">
         <div class="dashboard-left">
             <KpiCardsSection Metrics="@Kpis" />
-            <SmartGridSection Transactions="@Transactions" />
+            <SmartGridSection Transactions="@VisibleTransactions" />
         </div>
-        <AiAssistantSidebar Conversation="@Conversation" />
+        <AiAssistantSidebar Conversation="@Conversation" QueryResponse="@LatestQueryResponse" />
     </section>
 </main>
 
 @code {
+    private IReadOnlyList<TransactionRecord> VisibleTransactions = Array.Empty<TransactionRecord>();
+    private AiQueryResponse? LatestQueryResponse;
+
     private readonly List<KpiMetric> Kpis =
     [
         new() { Label = "Total Volume", Value = "£2.84M", Delta = "+8.4%", Positive = true, ProgressPercent = 84 },
@@ -48,4 +52,20 @@
         new() { Sender = "User", Message = "Any fraud patterns I should know?" },
         new() { Sender = "Elyra AI", Message = "Three failed Faster Payments over £3k have risk scores above 75. Sheffield Telecom Retail is the strongest anomaly cluster." }
     ];
+
+    protected override void OnInitialized()
+    {
+        VisibleTransactions = Transactions;
+    }
+
+    private Task HandleAskPromptAsync(string prompt)
+    {
+        var interpretation = AiQueryParser.Parse(prompt);
+        var executionResult = AiQueryExecutor.Execute(interpretation, Transactions, DateTime.Now);
+
+        VisibleTransactions = executionResult.Rows;
+        LatestQueryResponse = AiQueryResponseFormatter.Format(interpretation, executionResult);
+
+        return Task.CompletedTask;
+    }
 }
