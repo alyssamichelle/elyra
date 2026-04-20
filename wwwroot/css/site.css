@@ -442,25 +442,49 @@ a {
     background: rgba(235, 72, 72, 0.22);
 }
 
-.mini-track {
-    margin-top: 0.7rem;
-    height: 6px;
+.kpi-progress {
+    margin-top: 0.5rem;
+}
+
+.kpi-progress.k-progressbar {
+    height: 2px;
+    min-height: 2px;
     border-radius: 999px;
-    background: rgba(255, 255, 255, 0.1);
+    background: rgba(191, 208, 236, 0.18);
     overflow: hidden;
 }
 
-.mini-bar {
+.kpi-progress.k-progressbar .k-progress-status-wrap {
+    display: none;
+}
+
+.kpi-progress.k-progressbar .k-progress-status {
+    display: none;
+}
+
+.kpi-progress.k-progressbar .k-selected.k-progressbar-value {
     height: 100%;
     border-radius: inherit;
 }
 
-.bar-positive {
+.kpi-progress-positive.k-progressbar .k-selected {
     background: linear-gradient(90deg, #008f6b, #00c896);
 }
 
-.bar-negative {
+.kpi-progress-negative.k-progressbar .k-selected {
     background: linear-gradient(90deg, #dc4e4e, #ff7a7a);
+}
+
+.theme-dark .kpi-progress.k-progressbar {
+    background: rgba(191, 208, 236, 0.18);
+}
+
+.theme-light .kpi-progress-positive.k-progressbar .k-selected {
+    background: linear-gradient(90deg, #0f9b79, #22cba0);
+}
+
+.theme-light .kpi-progress-negative.k-progressbar .k-selected {
+    background: linear-gradient(90deg, #cc5454, #e88484);
 }
 
 .grid-shell {
@@ -1244,7 +1268,7 @@ a {
 }
 
 .theme-light .risk-track,
-.theme-light .mini-track {
+.theme-light .kpi-progress.k-progressbar {
     background: rgba(99, 123, 162, 0.14);
 }
 

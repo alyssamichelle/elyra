@@ -1,5 +1,3 @@
-@using System.Globalization
-
 <section class="kpi-grid">
     @foreach (var metric in Metrics)
     {
@@ -9,10 +7,8 @@
                 <span class="delta @(metric.Positive ? "delta-positive" : "delta-negative")">@metric.Delta</span>
             </div>
             <div class="kpi-value">@metric.Value</div>
-            <div class="mini-track">
-                <div class="mini-bar @(metric.Positive ? "bar-positive" : "bar-negative")"
-                     style="@($"width:{metric.ProgressPercent.ToString(CultureInfo.InvariantCulture)}%;")"></div>
-            </div>
+            <TelerikProgressBar Class="@($"kpi-progress {(metric.Positive ? "kpi-progress-positive" : "kpi-progress-negative")}")"
+                                Value="@metric.ProgressPercent" />
         </article>
     }
 </section>
