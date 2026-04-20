@@ -22,7 +22,7 @@
     <TelerikGrid Data="@FilteredTransactions"
                  Pageable="true"
                  PageSize="8"
-                 Height="540px"
+                 Height="min(540px, 62vh)"
                  Sortable="true"
                  Resizable="true"
                  Class="txn-grid">
@@ -56,7 +56,7 @@
             <GridCsvExport FileName="elyra-transactions" />
         </GridExport>
         <GridColumns>
-            <GridColumn Title="Transaction ID" Width="180px">
+            <GridColumn Title="Transaction ID">
                 <Template Context="item">
                     @{
                         var row = (TransactionRecord)item;
@@ -71,8 +71,8 @@
                     </span>
                 </Template>
             </GridColumn>
-            <GridColumn Field="@nameof(TransactionRecord.Merchant)" Title="Merchant" Width="180px" />
-            <GridColumn Title="Amount" Width="130px">
+            <GridColumn Field="@nameof(TransactionRecord.Merchant)" Title="Merchant" />
+            <GridColumn Title="Amount">
                 <Template Context="item">
                     @{
                         var row = (TransactionRecord)item;
@@ -80,8 +80,8 @@
                     <span class="amount">£@row.Amount.ToString("N2", CultureInfo.InvariantCulture)</span>
                 </Template>
             </GridColumn>
-            <GridColumn Field="@nameof(TransactionRecord.Currency)" Title="Currency" Width="95px" />
-            <GridColumn Title="Status" Width="135px">
+            <GridColumn Field="@nameof(TransactionRecord.Currency)" Title="Currency" />
+            <GridColumn Title="Status">
                 <Template Context="item">
                     @{
                         var row = (TransactionRecord)item;
@@ -89,8 +89,8 @@
                     <span class="status-chip @GetStatusClass(row.Status)">@row.Status</span>
                 </Template>
             </GridColumn>
-            <GridColumn Field="@nameof(TransactionRecord.PaymentRail)" Title="Payment Rail" Width="120px" />
-            <GridColumn Title="Risk Score" Width="170px">
+            <GridColumn Field="@nameof(TransactionRecord.PaymentRail)" Title="Payment Rail" />
+            <GridColumn Title="Risk Score">
                 <Template Context="item">
                     @{
                         var row = (TransactionRecord)item;
@@ -106,8 +106,7 @@
             </GridColumn>
             <GridColumn Field="@nameof(TransactionRecord.Timestamp)"
                         Title="Timestamp"
-                        DisplayFormat="{0:dd MMM HH:mm}"
-                        Width="145px" />
+                        DisplayFormat="{0:dd MMM HH:mm}" />
         </GridColumns>
     </TelerikGrid>
 </section>
