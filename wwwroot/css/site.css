@@ -430,16 +430,17 @@ a {
     font-weight: 600;
     line-height: 1.2;
     white-space: nowrap;
+    color: #5b7392;
 }
 
-.delta-positive {
-    color: #9af7d7;
-    background: rgba(0, 200, 150, 0.18);
+.theme-dark .delta-positive {
+    color: #1bb680;
+    background: rgba(0, 200, 150, 0.1);
 }
 
-.delta-negative {
-    color: #ffc0c0;
-    background: rgba(235, 72, 72, 0.22);
+.theme-dark .delta-negative {
+    color: #e65f5f;
+    background: rgba(235, 72, 72, 0.1);
 }
 
 .mini-track {
