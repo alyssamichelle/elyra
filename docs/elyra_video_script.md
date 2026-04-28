@@ -1,4 +1,5 @@
 # Elyra — Real-Time Transaction Intelligence (Video Script)
+- Talking Head Recording: https://progresssoftware-my.sharepoint.com/:v:/g/personal/anicoll_progress_com/IQBnJbD2Xb4WQ6Rsm6lEBe7eAU-aUlUF63h48zKs1FZX_OY?nav=eyJyZWZlcnJhbEluZm8iOnsicmVmZXJyYWxBcHAiOiJPbmVEcml2ZUZvckJ1c2luZXNzIiwicmVmZXJyYWxBcHBQbGF0Zm9ybSI6IldlYiIsInJlZmVycmFsTW9kZSI6InZpZXciLCJyZWZlcnJhbFZpZXciOiJNeUZpbGVzTGlua0NvcHkifX0&e=W2COrX
 
 ## Intro (0:00–0:30)
 
