@@ -10,7 +10,12 @@ It’s an example of what happens when you combine AI-powered workflows with rea
 And the cool part?  
 This entire application was scaffolded with the Telerik Agentic UI Generator, then extended with deterministic AI workflows.
 
-> **On-screen subtext:** App running (`/` route) with full dashboard visible. Then flash `Pages/Index.razor` (lines 1-38) to show composition of TopBar + Prompt + Grid + Sidebar.
+> **On-screen subtext:** App running (`/` route) with full dashboard visible.
+- https://screen.studio/share/TN9cFh47
+
+ > Then flash `Pages/Index.razor` (lines 1-38) to show composition of TopBar + Prompt + Grid + Sidebar.
+- https://screen.studio/share/Tq8hVj4R
+
 
 ---
 
@@ -24,7 +29,11 @@ And then AI helps you understand why.
 
 So instead of just staring at dashboards, you can actually interact with your data.
 
-> **On-screen subtext:** `Pages/Index.razor` (lines 481-530) for prompt processing and grid reset; then in app, run one prompt and show the grid changing.
+> **On-screen subtext:** `Pages/Index.razor` (lines 481-530) for prompt processing and grid reset; 
+- https://screen.studio/share/lci7rtji
+
+> then in app, run one prompt and show the grid changing.
+- https://screen.studio/share/gdHUQQC4
 
 ---
 
@@ -46,7 +55,7 @@ From there, I layered in:
 So this isn’t just generated UI — it’s scaffolded and extended into a real application.
 
 > **On-screen subtext:** Show your generator prompt doc/chat capture (`docs/elyra_blazor_dashboard_prompt.md`) and then transition to real component files: `Components/Dashboard/SmartGridSection.razor` and `Components/Dashboard/AiAssistantSidebar.razor`.
-
+- https://screen.studio/share/Jey6jnV2
 ---
 
 ## What the Generator Actually Did (1:50–2:40)
@@ -61,6 +70,7 @@ So the question becomes:
 If we look at the generated code and the chat output, you’ll notice a few key things happening.
 
 > **On-screen subtext:** Split view: app on left, generated/resulting code on right. Use `docs/elyra_blazor_dashboard_prompt.md` plus `Pages/Index.razor` (lines 11-37).
+- https://screen.studio/share/OOuNKf43
 
 First — when the grid was generated, the **MCP server was used to inject real component context**.  
 So instead of a generic table, it understood:
@@ -69,6 +79,7 @@ So instead of a generic table, it understood:
 - and how to represent things like status and risk visually  
 
 > **On-screen subtext:** `Components/Dashboard/SmartGridSection.razor` (lines 22-111) showing Telerik Grid + typed columns + risk/status templates.
+- https://screen.studio/share/39BYfgS9
 
 Second — the layout wasn’t just guessed.  
 The generator used **component-aware layout patterns**, so we get:
@@ -77,6 +88,7 @@ The generator used **component-aware layout patterns**, so we get:
 - and something that actually feels production-ready  
 
 > **On-screen subtext:** `Pages/Index.razor` (lines 11-38) and `wwwroot/css/site.css` (show dashboard layout/theming sections) while panning across top bar, KPI cards, grid, and sidebar.
+- https://screen.studio/share/Vw0XDanD
 
 And third — even things like theming and styling are influenced by that same context.  
 So instead of starting from scratch, you’re building on:
@@ -85,6 +97,7 @@ So instead of starting from scratch, you’re building on:
 - and known design systems  
 
 > **On-screen subtext:** `Components/Dashboard/TopBar.razor` (lines 12-24, 54-55) for theme/live toggles, then show theme switch in running app.
+- https://screen.studio/share/AUm61sQk
 
 So the value isn’t just:
 “we generated some UI”
@@ -93,7 +106,7 @@ It’s:
 **we generated UI with real knowledge of the components you’re actually going to use**
 
 > **On-screen subtext:** Brief montage of `AiPromptConsole.razor`, `SmartGridSection.razor`, `AiAssistantSidebar.razor` tabbing quickly to reinforce "real components."
-
+- https://screen.studio/share/TCosv4le
 ---
 
 ## Feature 1 — Ask Elyra Anything (1:40–3:00)
@@ -103,11 +116,13 @@ The first major feature is “Ask Elyra Anything.”
 This is powered by the Telerik AI Prompt component, with speech-to-text enabled.
 
 > **On-screen subtext:** `Components/Dashboard/AiPromptConsole.razor` (lines 11-24) highlighting `TelerikAIPrompt` + `EnableSpeechToText`.
+- https://screen.studio/share/0mlvEeL3
 
 So I can type something or speak something like:
 “show failed transactions above £3k”
 
 > **On-screen subtext:** In app, type that exact prompt in Ask Elyra and press enter; optionally show mic button.
+ - https://screen.studio/share/e8d39pHG
 
 And what happens is:
 
@@ -116,6 +131,7 @@ And what happens is:
 3. And then the grid updates to reflect that result  
 
 > **On-screen subtext:** `Pages/Index.razor` (lines 491-500) and side-by-side `Services/AiQuery/AiQueryParser.cs`, `Services/AiQuery/AiQueryExecutor.cs`, `Services/AiQuery/AiQueryResponseFormatter.cs`.
+- https://screen.studio/share/lg3xu7nf
 
 So instead of just generating text…
 
@@ -124,6 +140,7 @@ So instead of just generating text…
 Under the hood, this flows through a parser, executor, and formatter — so the AI experience is grounded, not hallucinated.
 
 > **On-screen subtext:** Zoom on telemetry/result cards in sidebar after prompt runs (intent, latency, mapped vs fallback).
+- https://screen.studio/share/bF1abpFQ
 
 ---
 
@@ -145,7 +162,7 @@ The grid becomes more than a table.
 It becomes a decision surface.
 
 > **On-screen subtext:** `Components/Dashboard/SmartGridSection.razor` (lines 29-57 for SmartBox + export, lines 58-110 for columns/risk/status, lines 232-236 for semantic search + AI assistant events). In app, demo semantic search then export CSV.
-
+- https://screen.studio/share/W9N6KvIX
 ---
 
 ## Feature 3 — AI Sidebar (3:50–5:00)
@@ -161,6 +178,7 @@ You can ask:
 “why did failed payments increase today?”
 
 > **On-screen subtext:** In app, ask that prompt and keep camera on sidebar response.
+- https://screen.studio/share/9C6J9oV6
 
 Elyra will:
 - run deterministic insight logic on the current dataset  
@@ -181,7 +199,7 @@ These are backed by an insights engine that evaluates:
 And feeds that back into the UI.
 
 > **On-screen subtext:** `Components/Dashboard/AiAssistantSidebar.razor` (lines 104-117 action buttons, lines 90-101 insight thread, lines 45-60 run telemetry). Click both actions live.
-
+- https://screen.studio/share/xisLScus
 ---
 
 ## Feature 4 — Live Data Simulation (5:00–6:00)
@@ -198,7 +216,7 @@ Every few seconds:
 So you’re interacting with a living system, not static data.
 
 > **On-screen subtext:** `Pages/Index.razor` (lines 325-357 live loop + transaction injection, lines 359-382 live notable events). In app, leave camera rolling for 8-12 seconds so KPIs and insights visibly refresh.
-
+- https://screen.studio/share/V9lJKzy6
 ---
 
 ## Why This Matters (6:00–6:40)
@@ -221,7 +239,7 @@ to:
 And because we surface AI run telemetry in the sidebar — including engine, model, latency, and mapped intent — viewers can see exactly what executed on each prompt.
 
 > **On-screen subtext:** `Components/Dashboard/AiAssistantSidebar.razor` (lines 37-60) with close-up on AI Run Details card as you issue one more prompt.
-
+- https://screen.studio/share/nwuxYx3C
 ---
 
 ## Wrap-Up (6:40–7:10)
@@ -239,7 +257,7 @@ Not just showing data…
 …but helping people understand it.
 
 > **On-screen subtext:** Wide dashboard shot, then quick code montage: `Pages/Index.razor`, `AiPromptConsole.razor`, `SmartGridSection.razor`, `AiAssistantSidebar.razor`.
-
+- https://screen.studio/share/nKKDoe52
 ---
 
 ## Optional Closing
@@ -248,4 +266,4 @@ And the best part is — this is all built on real components you can use today.
 
 No magic. Just the right pieces, connected well.
 
-> **On-screen subtext:** End slate on running app + website/product reference (Telerik UI for Blazor and Agentic UI Generator page in browser).
+> **On-screen subtext:** End state on running app + website/product reference (Telerik UI for Blazor and Agentic UI Generator page in browser) ??? LMK if you need additional footage for wra, Sindi.
